@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dopamine - Space Shooter RPG</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="ui-overlay" class="hidden">
+            <!-- UI elements will be dynamically inserted here -->
+        </div>
+        <div id="start-screen" class="screen">
+            <h1>DOPAMINE</h1>
+            <h2>Space Shooter RPG</h2>
+            <button id="start-button">Start Game</button>
+        </div>
+        <div id="specialization-screen" class="screen hidden">
+            <h2>Choose Your Specializations</h2>
+            <p>Select 2 out of 6 specializations. Others will be permanently locked.</p>
+            <div id="specialization-options"></div>
+            <button id="confirm-specializations" disabled>Confirm Selections (0/2)</button>
+        </div>
+        <div id="game-over-screen" class="screen hidden">
+            <h2>Game Over</h2>
+            <div id="game-stats"></div>
+            <button id="restart-button">Try Again</button>
+        </div>
+        <div id="menu-screen" class="screen hidden">
+            <h2>Menu</h2>
+            <button id="resume-button">Resume Game</button>
+            <button id="inventory-button">Inventory & Equipment</button>
+            <button id="skills-button">Skill Trees</button>
+            <button id="options-button">Options</button>
+        </div>
+    </div>
+
+    <!-- Core Game Engine -->
+    <script src="js/engine/game.js"></script>
+    <script src="js/engine/input.js"></script>
+    <script src="js/engine/renderer.js"></script>
+    <script src="js/engine/collision.js"></script>
+    <script src="js/engine/particle.js"></script>
+    <script src="js/engine/audio.js"></script>
+    <script src="js/engine/save.js"></script>
+    
+    <!-- Game Objects -->
+    <script src="js/objects/entity.js"></script>
+    <script src="js/objects/player.js"></script>
+    <script src="js/objects/enemy.js"></script>
+    <script src="js/objects/projectile.js"></script>
+    <script src="js/objects/item.js"></script>
+    <script src="js/objects/effect.js"></script>
+    
+    <!-- Game Systems -->
+    <script src="js/systems/combat.js"></script>
+    <script src="js/systems/progression.js"></script>
+    <script src="js/systems/equipment.js"></script>
+    <script src="js/systems/specialization.js"></script>
+    <script src="js/systems/ui.js"></script>
+    
+    <!-- Game Data -->
+    <script src="js/data/items.js"></script>
+    <script src="js/data/enemies.js"></script>
+    <script src="js/data/skills.js"></script>
+    
+    <!-- Main Script -->
+    <script src="js/main.js"></script>
+</body>
+</html> 

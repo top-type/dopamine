@@ -1,0 +1,493 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #000;
+    color: #fff;
+    overflow: hidden;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+#ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 3;
+    background-color: rgba(0, 0, 0, 0.85);
+    padding: 2rem;
+}
+
+.hidden {
+    display: none;
+}
+
+h1 {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+    letter-spacing: 0.5rem;
+}
+
+h2 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: #fff;
+}
+
+button {
+    background-color: #00aaff;
+    color: #fff;
+    border: none;
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    margin: 0.5rem;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    background-color: #00ffff;
+    transform: scale(1.05);
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Specialization Selection Screen */
+#specialization-options {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    max-width: 1000px;
+}
+
+.specialization-card {
+    width: 300px;
+    height: 200px;
+    background-color: rgba(0, 50, 100, 0.7);
+    border: 2px solid #0088cc;
+    border-radius: 10px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.specialization-card:hover {
+    transform: scale(1.05);
+    border-color: #00ffff;
+}
+
+.specialization-card.selected {
+    border-color: #00ff00;
+    background-color: rgba(0, 100, 50, 0.7);
+}
+
+/* Game UI Elements */
+.ui-element {
+    position: absolute;
+    background-color: rgba(0, 20, 40, 0.7);
+    border: 1px solid #00aaff;
+    border-radius: 5px;
+    padding: 0.5rem;
+    color: #fff;
+    pointer-events: auto;
+}
+
+#shield-meter {
+    bottom: 20px;
+    left: 20px;
+    width: 300px;
+    height: 30px;
+}
+
+#shield-bar {
+    height: 100%;
+    background-color: #00ffff;
+    width: 100%;
+    transition: width 0.3s ease;
+}
+
+#level-indicator {
+    top: 20px;
+    left: 20px;
+}
+
+#xp-bar {
+    width: 200px;
+    height: 10px;
+    background-color: #333;
+    margin-top: 5px;
+}
+
+#xp-progress {
+    height: 100%;
+    background-color: #ffaa00;
+    width: 0%;
+}
+
+#gold-counter {
+    top: 20px;
+    right: 20px;
+}
+
+#distance-indicator {
+    top: 60px;
+    right: 20px;
+}
+
+#cooldown-indicators {
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.cooldown {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.cooldown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    clip-path: polygon(50% 50%, 50% 0, 100% 0, 100% 100%, 0 100%, 0 0, 50% 0);
+    transform-origin: center;
+    transition: transform 0.1s linear;
+}
+
+/* Alert System */
+#alert-container {
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    max-width: 80%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.game-alert {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #ff0000;
+    border: 2px solid #ff0000;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    text-shadow: 0 0 5px #ff0000;
+}
+
+.game-alert.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Boss alerts - handled via JavaScript by adding a 'boss-alert' class */
+.game-alert.boss-alert {
+    color: #ff0000;
+    border-color: #ff0000;
+    font-size: 2rem;
+    padding: 15px 30px;
+    animation: pulse 1s infinite alternate;
+}
+
+/* Skill Icons */
+#skill-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+}
+
+.skill-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background-color: rgba(0, 50, 100, 0.7);
+    border: 2px solid #00aaff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.skill-icon:hover {
+    transform: scale(1.1);
+    border-color: #00ffff;
+}
+
+.skill-icon.on-cooldown {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.skill-icon-emoji {
+    font-size: 24px;
+}
+
+.skill-icon-text {
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.key-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    font-size: 12px;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Inventory and Equipment Screen */
+#inventory-screen {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1rem;
+    width: 90%;
+    height: 90%;
+    max-width: 1200px;
+}
+
+#inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+    overflow-y: auto;
+}
+
+.inventory-slot {
+    width: 100%;
+    aspect-ratio: 1;
+    background-color: rgba(0, 30, 60, 0.5);
+    border: 1px solid #0088cc;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+#equipment-slots {
+    display: grid;
+    grid-template-rows: repeat(9, 1fr);
+    gap: 0.5rem;
+}
+
+.equipment-slot {
+    background-color: rgba(0, 40, 80, 0.5);
+    border: 1px solid #00aaff;
+    border-radius: 5px;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.equipment-slot-name {
+    width: 150px;
+    font-weight: bold;
+}
+
+/* Skill Tree Screen */
+#skill-tree-screen {
+    width: 90%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+}
+
+#skill-trees {
+    display: flex;
+    flex: 1;
+    gap: 1rem;
+}
+
+.skill-tree {
+    flex: 1;
+    background-color: rgba(0, 30, 60, 0.5);
+    border: 1px solid #0088cc;
+    border-radius: 5px;
+    padding: 1rem;
+    overflow: auto;
+}
+
+.skill-node {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: rgba(0, 50, 100, 0.7);
+    border: 2px solid #0088cc;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.skill-node.available {
+    border-color: #00ffff;
+    animation: pulse 2s infinite;
+}
+
+.skill-node.unlocked {
+    border-color: #00ff00;
+    background-color: rgba(0, 100, 50, 0.7);
+}
+
+.skill-connection {
+    position: absolute;
+    background-color: #0088cc;
+    z-index: -1;
+}
+
+.skill-connection.unlocked {
+    background-color: #00ff00;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 255, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0); }
+}
+
+/* Item tooltip */
+.tooltip {
+    position: absolute;
+    background-color: rgba(0, 20, 40, 0.9);
+    border: 1px solid #00aaff;
+    border-radius: 5px;
+    padding: 0.5rem;
+    z-index: 100;
+    pointer-events: none;
+    max-width: 300px;
+}
+
+.item-name {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.item-common { color: #ffffff; }
+.item-uncommon { color: #00ff00; }
+.item-rare { color: #0088ff; }
+.item-epic { color: #aa00ff; }
+.item-legendary { color: #ffaa00; }
+
+.item-stats {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.item-description {
+    font-style: italic;
+    font-size: 0.8rem;
+}
+
+/* Game Over Screen */
+#game-stats {
+    margin: 2rem 0;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 3rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    button {
+        padding: 0.8rem 1.5rem;
+        font-size: 1rem;
+    }
+    
+    #inventory-screen {
+        grid-template-columns: 1fr;
+    }
+    
+    #inventory-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    #skill-trees {
+        flex-direction: column;
+    }
+} 
