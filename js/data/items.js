@@ -3,7 +3,7 @@
  */
 
 // Item rarity tiers and their drop chances
-const RARITY_TIERS = {
+export const RARITY_TIERS = {
     common: { chance: 0.60, color: '#aaaaaa', multiplier: 1.0 },
     uncommon: { chance: 0.25, color: '#55aa55', multiplier: 1.2 },
     rare: { chance: 0.10, color: '#5555ff', multiplier: 1.5 },
@@ -12,7 +12,7 @@ const RARITY_TIERS = {
 };
 
 // Item type definitions with base stats
-const ITEM_TYPES = {
+export const ITEM_TYPES = {
     primaryWeapon: {
         slot: 'primaryWeapon',
         baseStats: {
@@ -704,7 +704,7 @@ const ITEM_TEMPLATES = {
  * @param {number} depth - Current game depth
  * @returns {Object} Random item object
  */
-function generateRandomItem(depth) {
+export function generateRandomItem(depth) {
     // Determine rarity based on depth and random chance
     const rarityRoll = Math.random();
     let selectedRarity = 'common';
@@ -764,4 +764,22 @@ function generateRandomItem(depth) {
     }
     
     return item;
+}
+
+/**
+ * Get the rarity tier for an item
+ * @returns {string} - Rarity tier name
+ */
+export function getRandomRarity() {
+    // ... existing code ...
+}
+
+/**
+ * Generate a random stat value within a range
+ * @param {number} base - Base stat value
+ * @param {number} variance - Variance percentage (0-1)
+ * @returns {number} - Generated stat value
+ */
+export function generateStatValue(base, variance = 0.2) {
+    // ... existing code ...
 } 

@@ -1,7 +1,7 @@
 /**
  * AudioSystem - Handles sound effects and music for the game
  */
-class AudioSystem {
+export class AudioSystem {
     constructor() {
         // Audio context
         this.context = null;

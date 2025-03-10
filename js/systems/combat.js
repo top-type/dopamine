@@ -1,7 +1,7 @@
 /**
  * CombatSystem - Handles combat interactions between entities
  */
-class CombatSystem {
+export class CombatSystem {
     constructor(game) {
         this.game = game;
         

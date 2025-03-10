@@ -1,7 +1,7 @@
 /**
  * EquipmentSystem - Handles player equipment and inventory
  */
-class EquipmentSystem {
+export class EquipmentSystem {
     constructor(game) {
         this.game = game;
         

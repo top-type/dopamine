@@ -4,7 +4,7 @@
  */
 
 // Skill configuration - Single source of truth for all skill parameters
-const SKILL_CONFIG = {
+export const SKILL_CONFIG = {
     RAPID_FIRE: {
         multiplier: 2.5,     // Fire rate multiplier (2.5 = 150% increase)
         duration: 8,         // Effect duration in seconds
@@ -14,7 +14,7 @@ const SKILL_CONFIG = {
 };
 
 // Skill effect functions
-const SKILL_EFFECTS = {
+export const SKILL_EFFECTS = {
     // Gunner specialization effects
     RAPID_FIRE: function(game, player) {
         // Use the helper method to apply the temporary effect

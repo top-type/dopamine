@@ -2,7 +2,12 @@
  * Player - The player's ship
  * Extends the base Entity class
  */
-class Player extends Entity {
+import { Entity } from './entity.js';
+import { GameConfig } from '../config/game-config.js';
+import { SKILL_EFFECTS } from '../data/skills.js';
+import { Projectile } from './projectile.js';
+
+export class Player extends Entity {
     constructor(game) {
         // Position player in the middle-bottom of the screen
         const x = game.canvas.width / 2;
@@ -11,30 +16,30 @@ class Player extends Entity {
         super(game, x, y);
         
         this.type = 'player';
-        this.radius = 25;
+        this.radius = GameConfig.player.radius;
         
         // Movement properties
-        this.baseSpeed = 300; // Base speed in pixels per second
+        this.baseSpeed = GameConfig.player.baseSpeed; // Base speed in pixels per second
         this.currentSpeed = this.baseSpeed;
         
         // Shield properties
-        this.maxShield = 100;
+        this.maxShield = GameConfig.player.maxShield;
         this.shield = this.maxShield;
-        this.shieldRegenRate = 5; // Shield points per second
-        this.shieldRegenDelay = 3; // Seconds before shield starts regenerating
+        this.shieldRegenRate = GameConfig.player.shieldRegenRate; // Shield points per second
+        this.shieldRegenDelay = GameConfig.player.shieldRegenDelay; // Seconds before shield starts regenerating
         this.lastDamageTime = 0;
         
         // Combat properties
         this.isInvulnerable = false;
         this.invulnerabilityTime = 0;
-        this.invulnerabilityDuration = 1; // 1 second of invulnerability after taking damage
-        this.collisionDamage = 5; // Base collision damage (increased with Juggernaut specialization)
+        this.invulnerabilityDuration = GameConfig.player.invulnerabilityDuration; // 1 second of invulnerability after taking damage
+        this.collisionDamage = GameConfig.player.collisionDamage; // Base collision damage (increased with Juggernaut specialization)
         
         // Weapon properties
         this.primaryWeapon = {
-            damage: 25,
-            fireRate: 5, // Shots per second
-            projectileSpeed: 500,
+            damage: GameConfig.player.primaryWeapon.damage,
+            fireRate: GameConfig.player.primaryWeapon.fireRate, // Shots per second
+            projectileSpeed: GameConfig.player.primaryWeapon.projectileSpeed,
             lastFireTime: 0
         };
         
@@ -48,7 +53,7 @@ class Player extends Entity {
         
         // Inventory - ensure it's initialized as an array
         this.inventory = [];
-        this.maxInventorySize = 20;
+        this.maxInventorySize = GameConfig.player.maxInventorySize;
         
         // Equipment slots
         this.equipment = {

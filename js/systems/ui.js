@@ -2,7 +2,7 @@
  * UISystem - Manages all game UI elements and interactions
  * Handles HUD, menus, inventory, and other UI components
  */
-class UISystem {
+export class UISystem {
     constructor(game) {
         this.game = game;
         this.uiOverlay = document.getElementById('ui-overlay');
@@ -227,6 +227,9 @@ class UISystem {
         const shieldFill = document.getElementById('shield-fill');
         const shieldValue = document.getElementById('shield-value');
         
+        // Check if elements exist before updating
+        if (!shieldFill || !shieldValue || !this.game.player) return;
+        
         const shieldPercent = (this.game.player.shield / this.game.player.maxShield) * 100;
         shieldFill.style.width = `${shieldPercent}%`;
         
@@ -240,18 +243,21 @@ class UISystem {
             shieldFill.style.background = 'linear-gradient(90deg, #ffaa33, #ffcc33)';
             shieldFill.style.boxShadow = '0 0 8px rgba(255, 170, 51, 0.7)';
         } else {
-            shieldFill.style.background = 'linear-gradient(90deg, #0088ff, #00ddff)';
-            shieldFill.style.boxShadow = '0 0 8px rgba(0, 150, 255, 0.7)';
+            shieldFill.style.background = 'linear-gradient(90deg, #33aaff, #66ccff)';
+            shieldFill.style.boxShadow = '0 0 8px rgba(51, 170, 255, 0.7)';
         }
     }
     
     /**
-     * Update the level and XP display
+     * Update the level display
      */
     updateLevelDisplay() {
         const levelValue = document.getElementById('level-value');
         const xpFill = document.getElementById('xp-fill');
         const xpValue = document.getElementById('xp-value');
+        
+        // Check if elements exist before updating
+        if (!levelValue || !xpFill || !xpValue || !this.game.player) return;
         
         levelValue.textContent = this.game.level;
         
@@ -265,23 +271,16 @@ class UISystem {
      * Update the stats display
      */
     updateStatsDisplay() {
-        // Update gold display
-        const goldValue = document.getElementById('gold-value');
-        if (goldValue) {
-            goldValue.textContent = this.game.gold;
-        }
+        const statsContainer = document.getElementById('stats-container');
         
-        // Update depth display
-        const depthValue = document.getElementById('depth-value');
-        if (depthValue) {
-            depthValue.textContent = Math.floor(this.game.depth);
-        }
+        // Check if elements exist before updating
+        if (!statsContainer || !this.game.player) return;
         
-        // Update skill points display
-        const skillPoints = document.getElementById('skill-points');
-        if (skillPoints) {
-            skillPoints.textContent = this.game.skillPoints;
-        }
+        // Only update if the stats container is visible
+        if (statsContainer.offsetParent === null) return;
+        
+        // Update stats here
+        // This is a placeholder for actual stats display
     }
     
     /**
@@ -833,7 +832,8 @@ class UISystem {
      * Update all UI elements
      */
     update() {
-        if (!this.game.player) return;
+        // Check if player exists and UI is initialized
+        if (!this.game.player || !document.getElementById('hud')) return;
         
         this.updateShieldDisplay();
         this.updateLevelDisplay();

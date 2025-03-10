@@ -1,7 +1,7 @@
 /**
  * InputHandler - Manages keyboard input for the game
  */
-class InputHandler {
+export class InputHandler {
     constructor() {
         // Key states
         this.keys = {

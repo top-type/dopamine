@@ -2,7 +2,9 @@
  * SpecializationSystem - Manages player specializations and skill trees
  * Handles the selection, application, and progression of player specializations
  */
-class SpecializationSystem {
+import { SKILL_CONFIG, SKILL_EFFECTS } from '../data/skills.js';
+
+export class SpecializationSystem {
     constructor(game) {
         this.game = game;
         this.availableSpecializations = [

@@ -2,7 +2,12 @@
  * Enemy - Base class for enemy ships
  * Extends the base Entity class
  */
-class Enemy extends Entity {
+import { Entity } from './entity.js';
+import { Projectile } from './projectile.js';
+import { Item } from './item.js';
+import { generateRandomItem } from '../data/items.js';
+
+export class Enemy extends Entity {
     constructor(game, x, y, type = 'basic') {
         super(game, x, y);
         

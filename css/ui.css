@@ -1,0 +1,172 @@
+/**
+ * UI Styles
+ * Styling for UI elements
+ */
+
+/* HUD Elements */
+.ui-element {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid #00aaff;
+    border-radius: 5px;
+    padding: 10px;
+    color: #fff;
+    pointer-events: auto;
+}
+
+#hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+#top-hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+#bottom-hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+#player-info {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+#level-badge {
+    width: 40px;
+    height: 40px;
+    background-color: #00aaff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 10px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+#level-value {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+#player-bars {
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+}
+
+.bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+.icon {
+    margin-right: 5px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.fill-bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.shield-fill {
+    background-color: #00aaff;
+    box-shadow: 0 0 5px #00aaff;
+}
+
+.xp-fill {
+    background-color: #00ff00;
+    box-shadow: 0 0 5px #00ff00;
+}
+
+/* Menu Hint */
+#menu-hint {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+}
+
+.key-badge {
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin-right: 10px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: #fff;
+}
+
+.hint-text {
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+/* Cooldown Overlay */
+.cooldown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #fff;
+    pointer-events: none;
+}
+
+/* Key Indicators */
+.key-indicator {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-family: monospace;
+    font-size: 0.7rem;
+    color: #fff;
+    pointer-events: none;
+} 

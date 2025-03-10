@@ -2,9 +2,10 @@
  * Enemies - Data and spawning patterns for enemy ships
  * Contains enemy type definitions, spawn patterns, and difficulty scaling
  */
+import { Enemy } from '../objects/enemy.js';
 
 // Enemy Types with base stats (before depth scaling)
-const ENEMY_TYPES = {
+export const ENEMY_TYPES = {
     // Basic enemies
     SCOUT: {
         type: 'scout',
@@ -248,7 +249,7 @@ const FORMATIONS = {
             const row = Math.floor(i / 2);
             positions.push({
                 x: centerX + side * spacing * (row + 1),
-                y: -50 - row * spacing
+                y: -50 - row * 30
             });
         }
         return positions;
@@ -258,7 +259,7 @@ const FORMATIONS = {
         const positions = [];
         const cols = Math.ceil(Math.sqrt(count));
         const rows = Math.ceil(count / cols);
-        const spacing = 60;
+        const spacing = 50;
         const startX = canvasWidth / 2 - (cols - 1) * spacing / 2;
         
         for (let i = 0; i < count; i++) {
@@ -266,7 +267,7 @@ const FORMATIONS = {
             const row = Math.floor(i / cols);
             positions.push({
                 x: startX + col * spacing,
-                y: -50 - row * spacing
+                y: -150 - row * spacing
             });
         }
         return positions;
@@ -277,41 +278,30 @@ const FORMATIONS = {
 const SPECIAL_EVENTS = [
     {
         name: 'Asteroid Field',
-        depthRange: [300, Infinity],
-        chance: 0.001, // Chance per update to trigger
-        duration: 30, // seconds
+        depthRange: [500, Infinity],
+        chance: 0.01, // 1% chance per second
         effect: (game) => {
-            // Spawn asteroids and reduce enemy spawn rate
-            console.log('Asteroid field event triggered');
-            // Implementation would be in the game's event system
+            // TODO: Implement asteroid field effect
+            console.log('Asteroid field encountered!');
         }
     },
     {
-        name: 'Enemy Ambush',
+        name: 'Supply Drop',
         depthRange: [1000, Infinity],
-        chance: 0.0005,
-        duration: 15,
+        chance: 0.005, // 0.5% chance per second
         effect: (game) => {
-            // Spawn a large number of enemies at once
-            console.log('Enemy ambush event triggered');
-            // Implementation would be in the game's event system
-        }
-    },
-    {
-        name: 'Nebula Cloud',
-        depthRange: [2000, Infinity],
-        chance: 0.0008,
-        duration: 20,
-        effect: (game) => {
-            // Reduce visibility and enemy detection range
-            console.log('Nebula cloud event triggered');
-            // Implementation would be in the game's event system
+            // TODO: Implement supply drop effect
+            console.log('Supply drop incoming!');
         }
     }
 ];
 
-// Helper function to get current spawn pattern based on depth
-function getSpawnPatternForDepth(depth) {
+/**
+ * Get the spawn pattern for the current depth
+ * @param {number} depth - Current game depth
+ * @returns {object} - Spawn pattern configuration
+ */
+export function getSpawnPatternForDepth(depth) {
     for (const pattern of SPAWN_PATTERNS) {
         if (depth >= pattern.depthRange[0] && depth < pattern.depthRange[1]) {
             return pattern;
@@ -321,15 +311,23 @@ function getSpawnPatternForDepth(depth) {
     return SPAWN_PATTERNS[SPAWN_PATTERNS.length - 1];
 }
 
-// Helper function to get enemy types available at current depth
-function getAvailableEnemyTypes(allowedTypes) {
+/**
+ * Get available enemy types based on allowed types
+ * @param {array} allowedTypes - Array of allowed enemy type keys
+ * @returns {array} - Array of enemy type objects
+ */
+export function getAvailableEnemyTypes(allowedTypes) {
     return Object.values(ENEMY_TYPES).filter(enemy => 
         allowedTypes.includes(enemy.type) && enemy.spawnWeight > 0
     );
 }
 
-// Helper function to select a random enemy type based on spawn weights
-function selectRandomEnemyType(availableTypes) {
+/**
+ * Select a random enemy type from available types
+ * @param {array} availableTypes - Array of available enemy types
+ * @returns {object} - Selected enemy type
+ */
+export function selectRandomEnemyType(availableTypes) {
     const totalWeight = availableTypes.reduce((sum, enemy) => sum + enemy.spawnWeight, 0);
     let random = Math.random() * totalWeight;
     
@@ -344,24 +342,36 @@ function selectRandomEnemyType(availableTypes) {
     return availableTypes[0];
 }
 
-// Helper function to check if a boss should spawn at current depth
-function shouldSpawnBoss(depth, pattern) {
+/**
+ * Check if a boss should spawn
+ * @param {number} depth - Current game depth
+ * @param {object} pattern - Current spawn pattern
+ * @returns {boolean} - Whether a boss should spawn
+ */
+export function shouldSpawnBoss(depth, pattern) {
     // Check if current depth is within 5 units of a boss depth
     return pattern.bossDepths.some(bossDepth => 
         Math.abs(depth - bossDepth) < 5
     );
 }
 
-// Helper function to get boss type based on depth
-function getBossTypeForDepth(depth) {
+/**
+ * Get the boss type for the current depth
+ * @param {number} depth - Current game depth
+ * @returns {object} - Boss enemy type
+ */
+export function getBossTypeForDepth(depth) {
     if (depth >= 5000) {
         return ENEMY_TYPES.DREADNOUGHT;
     }
     return ENEMY_TYPES.DESTROYER;
 }
 
-// Main function to handle enemy spawning logic
-function spawnEnemies(game) {
+/**
+ * Spawn enemies based on the current game state
+ * @param {Game} game - Game instance
+ */
+export function spawnEnemies(game) {
     const depth = game.depth;
     const pattern = getSpawnPatternForDepth(depth);
     
@@ -426,9 +436,4 @@ function spawnEnemies(game) {
             }
         }
     }
-}
-
-// Export the spawning function and enemy data
-Game.prototype.spawnEnemies = function() {
-    spawnEnemies(this);
-}; 
+} 

@@ -1,7 +1,7 @@
 /**
  * ParticleSystem - Manages particle effects in the game
  */
-class ParticleSystem {
+export class ParticleSystem {
     constructor() {
         this.particles = [];
         console.log('Particle system initialized');

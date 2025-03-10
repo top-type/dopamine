@@ -1,7 +1,7 @@
 /**
  * ProgressionSystem - Handles player progression, levels, and difficulty scaling
  */
-class ProgressionSystem {
+export class ProgressionSystem {
     constructor(game) {
         this.game = game;
         

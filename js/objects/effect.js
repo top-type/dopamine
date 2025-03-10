@@ -2,7 +2,9 @@
  * Effect - Visual or gameplay effects in the game
  * Extends the base Entity class
  */
-class Effect extends Entity {
+import { Entity } from './entity.js';
+
+export class Effect extends Entity {
     constructor(game, x, y, duration, type = 'visual') {
         super(game, x, y);
         

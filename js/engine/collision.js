@@ -1,7 +1,7 @@
 /**
  * CollisionSystem - Handles collision detection between game objects
  */
-class CollisionSystem {
+export class CollisionSystem {
     constructor() {
         console.log('Collision system initialized');
     }

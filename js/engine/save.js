@@ -1,7 +1,7 @@
 /**
  * SaveSystem - Handles saving and loading game progress
  */
-class SaveSystem {
+export class SaveSystem {
     constructor() {
         this.saveKey = 'dopamine_save';
         console.log('Save system initialized');

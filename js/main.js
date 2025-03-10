@@ -1,6 +1,8 @@
 // Dopamine - Space Shooter RPG
 // Main entry point for the game
 
+import { Game } from './engine/game.js';
+
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Dopamine - Space Shooter RPG initializing...');
@@ -78,17 +80,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Set up keyboard event listener for the menu key (Escape)
+    let escKeyPressed = false;
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            if (document.getElementById('menu-screen').classList.contains('hidden')) {
-                document.getElementById('menu-screen').classList.remove('hidden');
-                game.pause();
+        if (e.key === 'Escape' && !escKeyPressed) {
+            escKeyPressed = true;
+            const menuScreen = document.getElementById('menu-screen');
+            
+            if (menuScreen.classList.contains('hidden')) {
+                // Show menu
+                menuScreen.classList.remove('hidden');
+                game.isPaused = true;
                 // Activate inventory tab by default
                 document.getElementById('tab-inventory').click();
             } else {
-                document.getElementById('menu-screen').classList.add('hidden');
-                game.resume();
+                // Hide menu
+                menuScreen.classList.add('hidden');
+                game.isPaused = false;
             }
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (e.key === 'Escape') {
+            escKeyPressed = false;
         }
     });
 }); 

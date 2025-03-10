@@ -3,22 +3,37 @@
  * Manages the game loop, entities, and game state
  */
 
-// Import skill configuration and effects if not already available in global scope
-if (typeof SKILL_CONFIG === 'undefined' || typeof SKILL_EFFECTS === 'undefined') {
-    try {
-        const skillModule = require('../data/skills.js');
-        window.SKILL_CONFIG = skillModule.SKILL_CONFIG;
-        window.SKILL_EFFECTS = skillModule.SKILL_EFFECTS;
-    } catch (e) {
-        console.error('Failed to import skill configuration:', e);
-    }
-}
+// Import dependencies
+import { InputHandler } from './input.js';
+import { Renderer } from './renderer.js';
+import { CollisionSystem } from './collision.js';
+import { ParticleSystem } from './particle.js';
+import { AudioSystem } from './audio.js';
+import { SaveSystem } from './save.js';
+import { StateManager, GameState } from './state-manager.js';
+
+import { Player } from '../objects/player.js';
+
+import { CombatSystem } from '../systems/combat.js';
+import { ProgressionSystem } from '../systems/progression.js';
+import { EquipmentSystem } from '../systems/equipment.js';
+import { SpecializationSystem } from '../systems/specialization.js';
+import { UISystem } from '../systems/ui.js';
+
+// Import configuration
+import { GameConfig } from '../config/game-config.js';
+
+// Import skill configuration
+import { SKILL_CONFIG, SKILL_EFFECTS } from '../data/skills.js';
+
+// Import enemy spawning function
+import { spawnEnemies } from '../data/enemies.js';
 
 /**
  * Game - Core game engine class
  * Manages the game loop, state, and coordinates all game systems
  */
-class Game {
+export class Game {
     constructor() {
         // Canvas setup
         this.canvas = document.getElementById('game-canvas');
@@ -39,6 +54,7 @@ class Game {
         this.particleSystem = new ParticleSystem();
         this.audioSystem = new AudioSystem();
         this.saveSystem = new SaveSystem();
+        this.stateManager = new StateManager(this);
         
         // Game objects
         this.player = null;
@@ -51,7 +67,7 @@ class Game {
         this.gold = 0;
         this.level = 1;
         this.xp = 0;
-        this.xpToNextLevel = 100;
+        this.xpToNextLevel = GameConfig.progression.baseXpToNextLevel;
         this.skillPoints = 0;
         
         // Game systems
@@ -67,7 +83,61 @@ class Game {
         // Handle window resize
         window.addEventListener('resize', () => this.resizeCanvas());
         
+        // Set up event listeners
+        this.setupEventListeners();
+        
         console.log('Game engine initialized');
+    }
+    
+    /**
+     * Set up event listeners for game controls
+     */
+    setupEventListeners() {
+        // Start button
+        document.getElementById('start-button').addEventListener('click', () => {
+            this.start();
+        });
+        
+        // Restart button
+        document.getElementById('restart-button').addEventListener('click', () => {
+            this.restart();
+        });
+        
+        // Resume button
+        document.getElementById('resume-button').addEventListener('click', () => {
+            this.resume();
+        });
+        
+        // Tab switching functionality
+        const menuTabs = document.querySelectorAll('.menu-tab');
+        menuTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                menuTabs.forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const contentId = tab.id.replace('tab-', '') + '-content';
+                const contentElement = document.getElementById(contentId);
+                if (contentElement) {
+                    contentElement.classList.add('active');
+                }
+                
+                // Load content based on tab
+                if (tab.id === 'tab-inventory') {
+                    this.loadInventory();
+                } else if (tab.id === 'tab-skills') {
+                    this.loadSkillTree();
+                } else if (tab.id === 'tab-shop') {
+                    this.loadShop();
+                }
+            });
+        });
+        
+        // Note: ESC key is now handled by the InputHandler
     }
     
     /**
@@ -76,6 +146,10 @@ class Game {
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        
+        // Update config
+        GameConfig.canvas.width = this.canvas.width;
+        GameConfig.canvas.height = this.canvas.height;
         
         // Update renderer if it exists
         if (this.renderer) {
@@ -87,45 +161,29 @@ class Game {
      * Start the game
      */
     start() {
-        console.log('=== GAME START DEBUGGING ===');
-        console.log('Game start called');
+        console.log('Game starting...');
         
         // Initialize player
         this.player = new Player(this);
-        console.log('Player initialized:', this.player);
-        console.log('Player inventory:', this.player.inventory);
         
         // Initialize with empty specializations
         this.selectedSpecializations = [];
         
-        // Initialize game state
-        this.isRunning = true;
-        this.isPaused = false;
-        this.gameTime = 0;
-        this.lastTimestamp = performance.now();
-        
         // Initialize UI
         this.uiSystem.initialize();
         
-        // Ensure inventory is properly initialized
-        if (!this.player.inventory) {
-            console.log('Player inventory not initialized, creating empty array');
-            this.player.inventory = [];
+        // Ensure menu screen is hidden
+        const menuScreen = document.getElementById('menu-screen');
+        if (menuScreen) {
+            menuScreen.classList.add('hidden');
         }
         
-        // Update inventory display
-        console.log('Updating inventory display on game start');
-        this.uiSystem.updateInventoryDisplay();
+        // Change state to playing
+        this.stateManager.changeState(GameState.PLAYING);
         
-        // Save initial game state
-        console.log('Saving initial game state');
-        this.saveSystem.saveGame(this);
-        
-        // Start game loop
-        requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
-        
-        console.log('Game started successfully');
-        console.log('=== END GAME START DEBUGGING ===');
+        // Start the game loop
+        this.lastTimestamp = performance.now();
+        requestAnimationFrame(this.gameLoop.bind(this));
     }
     
     /**
@@ -133,18 +191,15 @@ class Game {
      */
     pause() {
         this.isPaused = true;
-        console.log('Game paused');
+        this.stateManager.changeState(GameState.MENU);
     }
     
     /**
      * Resume the game
      */
     resume() {
-        if (this.isPaused) {
-            this.isPaused = false;
-            this.lastTimestamp = performance.now();
-            console.log('Game resumed');
-        }
+        this.isPaused = false;
+        this.stateManager.changeState(GameState.PLAYING);
     }
     
     /**
@@ -304,8 +359,8 @@ class Game {
      * Spawn enemies based on depth
      */
     spawnEnemies() {
-        // Implementation is in js/data/enemies.js
-        // The function is attached to Game.prototype in that file
+        // Call the imported spawnEnemies function
+        spawnEnemies(this);
     }
     
     /**
@@ -807,7 +862,7 @@ class Game {
         this.gold = 0;
         this.level = 1;
         this.xp = 0;
-        this.xpToNextLevel = 100;
+        this.xpToNextLevel = GameConfig.progression.baseXpToNextLevel;
         this.skillPoints = 0;
         
         // Reset systems
@@ -840,5 +895,28 @@ class Game {
         document.getElementById('start-screen').classList.remove('hidden');
         
         console.log('Game restarted');
+    }
+    
+    // Add a new method to toggle the menu
+    toggleMenu() {
+        const menuScreen = document.getElementById('menu-screen');
+        if (!menuScreen) return;
+        
+        // Toggle the hidden class
+        if (menuScreen.classList.contains('hidden')) {
+            // Show menu
+            menuScreen.classList.remove('hidden');
+            this.isPaused = true;
+            
+            // Activate inventory tab
+            const inventoryTab = document.getElementById('tab-inventory');
+            if (inventoryTab) {
+                inventoryTab.click();
+            }
+        } else {
+            // Hide menu
+            menuScreen.classList.add('hidden');
+            this.isPaused = false;
+        }
     }
 } 

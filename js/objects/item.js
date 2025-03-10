@@ -2,7 +2,9 @@
  * Item - Represents an equipment item that can be collected
  * Extends the base Entity class
  */
-class Item extends Entity {
+import { Entity } from './entity.js';
+
+export class Item extends Entity {
     constructor(game, x, y, itemData) {
         super(game, x, y);
         

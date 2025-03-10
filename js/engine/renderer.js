@@ -1,7 +1,7 @@
 /**
  * Renderer - Handles rendering the game to the canvas
  */
-class Renderer {
+export class Renderer {
     constructor(canvas, ctx) {
         this.canvas = canvas;
         this.ctx = ctx;

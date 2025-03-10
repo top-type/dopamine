@@ -1,7 +1,7 @@
 /**
  * Entity - Base class for all game objects
  */
-class Entity {
+export class Entity {
     constructor(game, x, y) {
         this.game = game;
         this.x = x;

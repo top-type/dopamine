@@ -1,8 +1,9 @@
 /**
- * Projectile - Represents a projectile fired by a player or enemy
- * Extends the base Entity class
+ * Projectile - Represents a projectile in the game
  */
-class Projectile extends Entity {
+import { Entity } from './entity.js';
+
+export class Projectile extends Entity {
     constructor(game, x, y, speed, direction, damage, source, color = '#ffffff') {
         super(game, x, y);
         
