@@ -35,41 +35,79 @@ class UISystem {
         hud.id = 'hud';
         
         hud.innerHTML = `
-            <div id="shield-container">
-                <div id="shield-label">Shield</div>
-                <div id="shield-bar">
-                    <div id="shield-fill"></div>
+            <div id="top-hud">
+                <div id="player-info">
+                    <div id="level-badge">
+                        <span id="level-value">1</span>
+                    </div>
+                    <div id="player-bars">
+                        <div id="shield-container">
+                            <div class="bar-label">
+                                <span class="icon">🛡️</span>
+                                <span>Shield</span>
+                                <span id="shield-value">100/100</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="shield-fill" class="fill-bar shield-fill"></div>
+                            </div>
+                        </div>
+                        <div id="xp-container">
+                            <div class="bar-label">
+                                <span class="icon">✨</span>
+                                <span>XP</span>
+                                <span id="xp-value">0/100</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="xp-fill" class="fill-bar xp-fill"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="shield-value">100/100</div>
+                
+                <div id="game-stats">
+                    <div class="stat-item" id="depth-display">
+                        <div class="stat-icon">🚀</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Distance</div>
+                            <div class="stat-value"><span id="depth-value">0</span> ly</div>
+                        </div>
+                    </div>
+                    <div class="stat-item" id="gold-display">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Gold</div>
+                            <div class="stat-value"><span id="gold-value">0</span></div>
+                        </div>
+                    </div>
+                    <div class="stat-item" id="skill-points-display">
+                        <div class="stat-icon">🌟</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Skill Points</div>
+                            <div class="stat-value"><span id="skill-points">0</span></div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <div id="level-container">
-                <div id="level-info">
-                    <span id="level-label">Level</span>
-                    <span id="level-value">1</span>
+            <div id="bottom-hud">
+                <div id="weapon-info">
+                    <div class="weapon-slot primary">
+                        <div class="weapon-icon">🔫</div>
+                        <div class="weapon-label">Primary [SPACE]</div>
+                    </div>
+                    <div class="weapon-slot secondary">
+                        <div class="weapon-icon">💥</div>
+                        <div class="weapon-label">Secondary [CTRL]</div>
+                    </div>
                 </div>
-                <div id="xp-bar">
-                    <div id="xp-fill"></div>
-                </div>
-                <div id="xp-value">0/100</div>
-            </div>
-            
-            <div id="stats-container">
-                <div id="gold-display">
-                    <span class="stat-icon">💰</span>
-                    <span id="gold-value">0</span>
-                </div>
-                <div id="depth-display">
-                    <span class="stat-icon">🚀</span>
-                    <span id="depth-value">0</span> ly
-                </div>
-                <div id="skill-points-display">
-                    <span class="stat-icon">✨</span>
-                    <span id="skill-points">0</span> SP
+                
+                <div id="skill-container"></div>
+                
+                <div id="menu-hint">
+                    <div class="key-badge">ESC</div>
+                    <div class="hint-text">Menu</div>
                 </div>
             </div>
-            
-            <div id="skill-container"></div>
         `;
         
         this.uiOverlay.appendChild(hud);
@@ -204,11 +242,14 @@ class UISystem {
         
         // Change color based on shield level
         if (shieldPercent < 25) {
-            shieldFill.style.backgroundColor = '#ff3333';
+            shieldFill.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)';
+            shieldFill.style.boxShadow = '0 0 8px rgba(255, 51, 51, 0.7)';
         } else if (shieldPercent < 50) {
-            shieldFill.style.backgroundColor = '#ffaa33';
+            shieldFill.style.background = 'linear-gradient(90deg, #ffaa33, #ffcc33)';
+            shieldFill.style.boxShadow = '0 0 8px rgba(255, 170, 51, 0.7)';
         } else {
-            shieldFill.style.backgroundColor = '#33aaff';
+            shieldFill.style.background = 'linear-gradient(90deg, #0088ff, #00ddff)';
+            shieldFill.style.boxShadow = '0 0 8px rgba(0, 150, 255, 0.7)';
         }
     }
     
@@ -313,12 +354,20 @@ class UISystem {
             skillIcon.dataset.skillId = ability.id;
             skillIcon.dataset.index = index;
             
+            // Create skill icon content
+            let iconContent = '';
+            
             // Set icon content
             if (ability.icon) {
-                skillIcon.innerHTML = `<span class="skill-icon-emoji">${ability.icon}</span>`;
+                iconContent = `<span class="skill-icon-emoji">${ability.icon}</span>`;
             } else {
-                skillIcon.innerHTML = `<span class="skill-icon-text">${index + 1}</span>`;
+                iconContent = `<span class="skill-icon-emoji">✨</span>`;
             }
+            
+            // Add skill name
+            iconContent += `<span class="skill-icon-text">${ability.name}</span>`;
+            
+            skillIcon.innerHTML = iconContent;
             
             // Set tooltip
             skillIcon.title = `${ability.name} (${ability.cooldown}s cooldown): ${ability.description}`;
@@ -327,7 +376,7 @@ class UISystem {
             if (ability.specialization) {
                 const spec = this.game.specializationSystem.getSpecializationById(ability.specialization);
                 if (spec) {
-                    skillIcon.style.backgroundColor = spec.color;
+                    skillIcon.style.borderColor = spec.color;
                 }
             }
             
