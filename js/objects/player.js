@@ -50,6 +50,10 @@ class Player extends Entity {
             // Default abilities will be added by specializations
         ];
         
+        // Inventory
+        this.inventory = [];
+        this.maxInventorySize = 20;
+        
         // Equipment slots
         this.equipment = {
             primaryWeapon: null,

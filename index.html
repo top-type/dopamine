@@ -29,11 +29,35 @@
             <button id="restart-button">Try Again</button>
         </div>
         <div id="menu-screen" class="screen hidden">
-            <h2>Menu</h2>
-            <button id="resume-button">Resume Game</button>
-            <button id="inventory-button">Inventory & Equipment</button>
-            <button id="skills-button">Skill Trees</button>
-            <button id="options-button">Options</button>
+            <div id="menu-overlay"></div>
+            <div id="menu-container">
+                <div id="menu-header">
+                    <h2>Menu</h2>
+                    <button id="resume-button" class="close-button">×</button>
+                </div>
+                <div id="menu-tabs">
+                    <button id="tab-inventory" class="menu-tab active">Inventory</button>
+                    <button id="tab-skills" class="menu-tab">Skills</button>
+                    <button id="tab-shop" class="menu-tab">Shop</button>
+                    <button id="tab-options" class="menu-tab">Options</button>
+                </div>
+                <div id="menu-content">
+                    <div id="inventory-content" class="tab-content active">
+                        <!-- Inventory content will be dynamically inserted here -->
+                    </div>
+                    <div id="skills-content" class="tab-content">
+                        <!-- Skills content will be dynamically inserted here -->
+                    </div>
+                    <div id="shop-content" class="tab-content">
+                        <h3>Shop</h3>
+                        <p>Shop functionality coming soon!</p>
+                    </div>
+                    <div id="options-content" class="tab-content">
+                        <h3>Options</h3>
+                        <p>Options functionality coming soon!</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

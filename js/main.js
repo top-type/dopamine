@@ -33,16 +33,30 @@ document.addEventListener('DOMContentLoaded', () => {
         game.resume();
     });
     
-    document.getElementById('inventory-button').addEventListener('click', () => {
-        game.openInventory();
-    });
-    
-    document.getElementById('skills-button').addEventListener('click', () => {
-        game.openSkillTree();
-    });
-    
-    document.getElementById('options-button').addEventListener('click', () => {
-        // TODO: Implement options menu
+    // Tab switching functionality
+    const menuTabs = document.querySelectorAll('.menu-tab');
+    menuTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Remove active class from all tabs and content
+            menuTabs.forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Add active class to clicked tab and corresponding content
+            tab.classList.add('active');
+            const contentId = tab.id.replace('tab-', '') + '-content';
+            document.getElementById(contentId).classList.add('active');
+            
+            // Load content based on tab
+            if (tab.id === 'tab-inventory') {
+                game.loadInventory();
+            } else if (tab.id === 'tab-skills') {
+                game.loadSkillTree();
+            } else if (tab.id === 'tab-shop') {
+                game.loadShop();
+            }
+        });
     });
     
     // Set up keyboard event listener for the menu key (Escape)
@@ -51,6 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.getElementById('menu-screen').classList.contains('hidden')) {
                 document.getElementById('menu-screen').classList.remove('hidden');
                 game.pause();
+                // Activate inventory tab by default
+                document.getElementById('tab-inventory').click();
             } else {
                 document.getElementById('menu-screen').classList.add('hidden');
                 game.resume();

@@ -328,7 +328,8 @@ class Game {
      */
     openInventory() {
         this.pause();
-        this.equipmentSystem.openInventoryScreen();
+        document.getElementById('menu-screen').classList.remove('hidden');
+        document.getElementById('tab-inventory').click();
     }
     
     /**
@@ -336,6 +337,101 @@ class Game {
      */
     openSkillTree() {
         this.pause();
-        this.specializationSystem.openSkillTreeScreen();
+        document.getElementById('menu-screen').classList.remove('hidden');
+        document.getElementById('tab-skills').click();
+    }
+    
+    /**
+     * Load inventory content
+     */
+    loadInventory() {
+        const inventoryContent = document.getElementById('inventory-content');
+        
+        // Clear existing content
+        inventoryContent.innerHTML = '';
+        
+        // Create inventory layout
+        const inventoryLayout = document.createElement('div');
+        inventoryLayout.className = 'inventory-layout';
+        inventoryLayout.innerHTML = `
+            <div class="inventory-section">
+                <h3>Equipment</h3>
+                <div id="equipment-slots" class="equipment-grid"></div>
+            </div>
+            <div class="inventory-section">
+                <h3>Inventory <span id="inventory-count">0/20</span></h3>
+                <div id="inventory-grid"></div>
+            </div>
+            <div class="inventory-section">
+                <h3>Item Details</h3>
+                <div id="item-details" class="hidden">
+                    <div id="item-details-content"></div>
+                    <div id="item-actions">
+                        <button id="equip-item" class="action-button">Equip</button>
+                        <button id="drop-item" class="action-button">Drop</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        inventoryContent.appendChild(inventoryLayout);
+        
+        // Update inventory display
+        this.uiSystem.updateInventoryDisplay();
+        this.uiSystem.updateEquipmentDisplay();
+    }
+    
+    /**
+     * Load skill tree content
+     */
+    loadSkillTree() {
+        const skillsContent = document.getElementById('skills-content');
+        
+        // Clear existing content
+        skillsContent.innerHTML = '';
+        
+        // Create skill tree layout
+        const skillTreeLayout = document.createElement('div');
+        skillTreeLayout.className = 'skill-tree-layout';
+        skillTreeLayout.innerHTML = `
+            <div class="skill-tree-header">
+                <h3>Available Skill Points: <span id="available-skill-points">${this.skillPoints}</span></h3>
+            </div>
+            <div id="skill-trees-container"></div>
+        `;
+        
+        skillsContent.appendChild(skillTreeLayout);
+        
+        // Render skill trees
+        this.specializationSystem.renderSkillTree(document.getElementById('skill-trees-container'));
+    }
+    
+    /**
+     * Load shop content
+     */
+    loadShop() {
+        const shopContent = document.getElementById('shop-content');
+        
+        // Clear existing content
+        shopContent.innerHTML = '';
+        
+        // Create shop layout
+        const shopLayout = document.createElement('div');
+        shopLayout.className = 'shop-layout';
+        shopLayout.innerHTML = `
+            <div class="shop-header">
+                <h3>Shop</h3>
+                <div class="player-gold">
+                    <span class="gold-icon">💰</span>
+                    <span id="shop-gold-amount">${this.gold}</span> Gold
+                </div>
+            </div>
+            <div class="shop-items">
+                <p>No items available for purchase at this time.</p>
+                <p>Check back after defeating more enemies!</p>
+            </div>
+        `;
+        
+        shopContent.appendChild(shopLayout);
     }
 } 

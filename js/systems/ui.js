@@ -410,8 +410,9 @@ class UISystem {
      */
     closeInventory() {
         document.getElementById('inventory-panel').classList.add('hidden');
+        document.getElementById('menu-screen').classList.remove('hidden');
         this.isInventoryOpen = false;
-        this.game.resume();
+        this.game.pause();
     }
     
     /**
@@ -589,8 +590,9 @@ class UISystem {
      */
     closeSkillTree() {
         document.getElementById('skill-tree-panel').classList.add('hidden');
+        document.getElementById('menu-screen').classList.remove('hidden');
         this.isSkillTreeOpen = false;
-        this.game.resume();
+        this.game.pause();
     }
     
     /**
