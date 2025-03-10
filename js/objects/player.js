@@ -467,6 +467,76 @@ class Player extends Entity {
     }
     
     /**
+     * Update an existing skill
+     * @param {Object} skill - The skill to update
+     */
+    updateSkill(skill) {
+        console.log(`Updating skill: ${skill.name} (Level ${skill.level})`);
+        
+        // For active skills, update the corresponding special ability
+        if (skill.type === 'active') {
+            const abilityIndex = this.specialAbilities.findIndex(ability => ability.id === skill.id);
+            
+            if (abilityIndex !== -1) {
+                // Update properties that might change with level
+                this.specialAbilities[abilityIndex].cooldown = skill.cooldown;
+                this.specialAbilities[abilityIndex].effect = skill.effect;
+                
+                console.log(`Updated active skill: ${skill.name}`);
+            } else {
+                console.error(`Tried to update non-existent skill: ${skill.name}`);
+                // If not found, add it as a new skill
+                this.addSkill(skill);
+            }
+        }
+        // For passive skills, apply additional effects based on level
+        else if (skill.type === 'passive' && skill.effects) {
+            skill.effects.forEach(effect => {
+                // Apply the effect again for each level
+                switch (effect.type) {
+                    case 'damage':
+                        this.primaryWeapon.damage *= (1 + effect.value);
+                        console.log(`Applied additional damage boost: ${effect.value * 100}%`);
+                        break;
+                        
+                    case 'shield':
+                        this.maxShield *= (1 + effect.value);
+                        this.shield = this.maxShield;
+                        console.log(`Applied additional shield boost: ${effect.value * 100}%`);
+                        break;
+                        
+                    case 'speed':
+                        this.baseSpeed *= (1 + effect.value);
+                        this.currentSpeed = this.baseSpeed;
+                        console.log(`Applied additional speed boost: ${effect.value * 100}%`);
+                        break;
+                        
+                    case 'fireRate':
+                        this.primaryWeapon.fireRate *= (1 + effect.value);
+                        console.log(`Applied additional fire rate boost: ${effect.value * 100}%`);
+                        break;
+                        
+                    case 'shieldRegen':
+                        this.shieldRegenRate *= (1 + effect.value);
+                        console.log(`Applied additional shield regen boost: ${effect.value * 100}%`);
+                        break;
+                        
+                    case 'collisionDamage':
+                        this.collisionDamage *= (1 + effect.value);
+                        console.log(`Applied additional collision damage boost: ${effect.value * 100}%`);
+                        break;
+                        
+                    default:
+                        console.log(`Unknown effect type: ${effect.type}`);
+                        break;
+                }
+            });
+            
+            console.log(`Updated passive skill: ${skill.name}`);
+        }
+    }
+    
+    /**
      * Render the player
      */
     render(ctx) {

@@ -11,13 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up event listeners for the start screen
     document.getElementById('start-button').addEventListener('click', () => {
         document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('specialization-screen').classList.remove('hidden');
-        game.initializeSpecializationSelection();
-    });
-    
-    // Set up event listeners for the specialization screen
-    document.getElementById('confirm-specializations').addEventListener('click', () => {
-        document.getElementById('specialization-screen').classList.add('hidden');
         game.start();
     });
     

@@ -262,17 +262,25 @@ class UISystem {
     }
     
     /**
-     * Update the stats display (gold, depth, skill points)
+     * Update the stats display
      */
     updateStatsDisplay() {
-        document.getElementById('gold-value').textContent = this.game.gold;
-        document.getElementById('depth-value').textContent = Math.floor(this.game.depth);
-        document.getElementById('skill-points').textContent = this.game.skillPoints;
+        // Update gold display
+        const goldValue = document.getElementById('gold-value');
+        if (goldValue) {
+            goldValue.textContent = this.game.gold;
+        }
         
-        // Also update in the skill tree panel if it exists
-        const availableSkillPoints = document.getElementById('available-skill-points');
-        if (availableSkillPoints) {
-            availableSkillPoints.textContent = this.game.skillPoints;
+        // Update depth display
+        const depthValue = document.getElementById('depth-value');
+        if (depthValue) {
+            depthValue.textContent = Math.floor(this.game.depth);
+        }
+        
+        // Update skill points display
+        const skillPoints = document.getElementById('skill-points');
+        if (skillPoints) {
+            skillPoints.textContent = this.game.skillPoints;
         }
     }
     
@@ -746,6 +754,12 @@ class UISystem {
     openSkillTree() {
         if (this.isInventoryOpen) {
             this.closeInventory();
+        }
+        
+        // Check if there's a pending specialization unlock
+        if (this.game.specializationSystem.pendingSpecializationUnlock) {
+            this.game.specializationSystem.showSpecializationSelection();
+            return;
         }
         
         document.getElementById('skill-tree-panel').classList.remove('hidden');

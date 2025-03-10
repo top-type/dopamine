@@ -869,18 +869,139 @@ class SpecializationSystem {
         
         this.selectedSpecializations = [];
         this.maxSelections = 2;
+        this.specializationUnlockLevels = [2, 10]; // First at level 2, second at level 10
+        this.pendingSpecializationUnlock = false;
     }
     
     /**
-     * Initialize the specialization selection screen
+     * Check if a specialization can be unlocked at the current level
+     * @returns {boolean} Whether a specialization can be unlocked
+     */
+    checkSpecializationUnlock() {
+        console.log('Checking for specialization unlock...');
+        
+        const currentLevel = this.game.level;
+        console.log(`Current level: ${currentLevel}`);
+        
+        // Make sure game.selectedSpecializations is initialized
+        if (!this.game.selectedSpecializations) {
+            console.log('Initializing empty selectedSpecializations array');
+            this.game.selectedSpecializations = [];
+        }
+        
+        const currentSpecCount = this.game.selectedSpecializations.length;
+        console.log(`Current specialization count: ${currentSpecCount}`);
+        console.log(`Unlock levels: ${this.specializationUnlockLevels}`);
+        
+        // Check if we have fewer specializations than allowed and if the current level meets the requirement
+        if (currentSpecCount < this.maxSelections && 
+            currentLevel >= this.specializationUnlockLevels[currentSpecCount]) {
+            console.log('Specialization can be unlocked!');
+            this.pendingSpecializationUnlock = true;
+            return true;
+        }
+        
+        console.log('No specialization can be unlocked at this time');
+        return false;
+    }
+    
+    /**
+     * Show the specialization selection UI within the skills tab
+     */
+    showSpecializationSelection() {
+        console.log('Showing specialization selection UI...');
+        
+        if (!this.pendingSpecializationUnlock) {
+            console.log('No pending specialization unlock, not showing selection UI');
+            return;
+        }
+        
+        const container = document.getElementById('skills-content');
+        if (!container) {
+            console.error('Skills content container not found');
+            return;
+        }
+        
+        console.log('Creating specialization selection UI');
+        
+        // Create specialization selection UI
+        container.innerHTML = `
+            <div class="skill-tree-layout">
+                <div class="skill-tree-header">
+                    <h3>Unlock Specialization</h3>
+                    <div id="skill-points-header">
+                        <p>Level ${this.game.level}: Choose a specialization to unlock</p>
+                    </div>
+                </div>
+                <div id="specialization-selection-container">
+                    <div class="specialization-grid" id="specialization-options"></div>
+                </div>
+            </div>
+        `;
+        
+        // Initialize the selection options
+        this.initializeSelectionScreen();
+        
+        // Add confirm button
+        const confirmContainer = document.createElement('div');
+        confirmContainer.className = 'confirm-specialization-container';
+        confirmContainer.innerHTML = `
+            <button id="confirm-specialization" class="primary-button" disabled>Confirm Selection</button>
+        `;
+        
+        const selectionContainer = document.getElementById('specialization-selection-container');
+        if (selectionContainer) {
+            console.log('Adding confirm button to selection container');
+            selectionContainer.appendChild(confirmContainer);
+            
+            // Add event listener for confirm button
+            const confirmButton = document.getElementById('confirm-specialization');
+            if (confirmButton) {
+                console.log('Adding event listener to confirm button');
+                confirmButton.addEventListener('click', () => {
+                    console.log('Confirm button clicked, applying specialization');
+                    this.applySelectedSpecializations();
+                    
+                    // Reload the skill tree view
+                    console.log('Reloading skill tree view');
+                    this.game.loadSkillTree();
+                });
+            }
+        } else {
+            console.error('Specialization selection container not found');
+        }
+    }
+    
+    /**
+     * Initialize the specialization selection options
      */
     initializeSelectionScreen() {
         const container = document.getElementById('specialization-options');
+        if (!container) {
+            console.error('Specialization options container not found');
+            return;
+        }
+        
         container.innerHTML = '';
         
-        this.availableSpecializations.forEach(spec => {
+        // Make sure game.selectedSpecializations is initialized
+        if (!this.game.selectedSpecializations) {
+            this.game.selectedSpecializations = [];
+        }
+        
+        // Filter out already selected specializations
+        const availableSpecs = this.availableSpecializations.filter(
+            spec => !this.game.selectedSpecializations.includes(spec.id)
+        );
+        
+        if (availableSpecs.length === 0) {
+            container.innerHTML = '<p>No more specializations available to unlock.</p>';
+            return;
+        }
+        
+        availableSpecs.forEach(spec => {
             const specElement = document.createElement('div');
-            specElement.className = 'specialization-option';
+            specElement.className = 'specialization-card';
             specElement.dataset.id = spec.id;
             specElement.style.borderColor = spec.color;
             
@@ -908,18 +1029,32 @@ class SpecializationSystem {
      * @param {HTMLElement} element - The DOM element
      */
     toggleSpecialization(specId, element) {
-        const index = this.selectedSpecializations.indexOf(specId);
-        
-        if (index === -1) {
-            // Not selected, try to select it
-            if (this.selectedSpecializations.length < this.maxSelections) {
-                this.selectedSpecializations.push(specId);
-                element.classList.add('selected');
-            }
+        // For unlocking one specialization at a time, we clear previous selections
+        if (this.pendingSpecializationUnlock) {
+            // Clear all selections
+            document.querySelectorAll('.specialization-card.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+            this.selectedSpecializations = [];
+            
+            // Select the new one
+            this.selectedSpecializations.push(specId);
+            element.classList.add('selected');
         } else {
-            // Already selected, deselect it
-            this.selectedSpecializations.splice(index, 1);
-            element.classList.remove('selected');
+            // Original behavior for selecting multiple specializations
+            const index = this.selectedSpecializations.indexOf(specId);
+            
+            if (index === -1) {
+                // Not selected, try to select it
+                if (this.selectedSpecializations.length < this.maxSelections) {
+                    this.selectedSpecializations.push(specId);
+                    element.classList.add('selected');
+                }
+            } else {
+                // Already selected, deselect it
+                this.selectedSpecializations.splice(index, 1);
+                element.classList.remove('selected');
+            }
         }
         
         this.updateConfirmButton();
@@ -929,29 +1064,96 @@ class SpecializationSystem {
      * Update the confirm button state based on selections
      */
     updateConfirmButton() {
-        const confirmButton = document.getElementById('confirm-specializations');
-        confirmButton.disabled = this.selectedSpecializations.length !== this.maxSelections;
-        confirmButton.textContent = `Confirm Selections (${this.selectedSpecializations.length}/${this.maxSelections})`;
+        const confirmButton = document.getElementById('confirm-specialization');
+        if (!confirmButton) return;
+        
+        if (this.pendingSpecializationUnlock) {
+            // For unlocking one specialization at a time
+            confirmButton.disabled = this.selectedSpecializations.length !== 1;
+            confirmButton.textContent = 'Confirm Selection';
+        } else {
+            // Original behavior for selecting multiple specializations
+            confirmButton.disabled = this.selectedSpecializations.length !== this.maxSelections;
+            confirmButton.textContent = `Confirm Selections (${this.selectedSpecializations.length}/${this.maxSelections})`;
+        }
     }
     
     /**
      * Apply the selected specializations to the player
      */
     applySelectedSpecializations() {
-        this.game.selectedSpecializations = this.selectedSpecializations;
+        console.log('Applying selected specializations...');
         
-        // Apply initial skills
-        this.selectedSpecializations.forEach(specId => {
-            const spec = this.getSpecializationById(specId);
-            console.log(`Applying specialization: ${spec.name}`);
+        // If this is a specialization unlock during the game
+        if (this.pendingSpecializationUnlock) {
+            console.log('Handling pending specialization unlock');
             
-            // Apply level 1 active skills
-            spec.skills.forEach(skill => {
-                if (skill.level > 0) {
-                    this.game.player.addSkill(skill);
+            // Add the new specialization to the game's selected specializations
+            const newSpecId = this.selectedSpecializations[0];
+            console.log(`Selected specialization ID: ${newSpecId}`);
+            
+            // Make sure game.selectedSpecializations is initialized
+            if (!this.game.selectedSpecializations) {
+                console.log('Initializing empty selectedSpecializations array');
+                this.game.selectedSpecializations = [];
+            }
+            
+            // Make sure it's not already selected
+            if (!this.game.selectedSpecializations.includes(newSpecId)) {
+                console.log(`Adding specialization ${newSpecId} to game's selected specializations`);
+                this.game.selectedSpecializations.push(newSpecId);
+                
+                // Apply the specialization
+                const spec = this.getSpecializationById(newSpecId);
+                if (spec) {
+                    console.log(`Applying specialization: ${spec.name}`);
+                    
+                    // Apply level 1 active skills
+                    spec.skills.forEach(skill => {
+                        if (skill.level > 0) {
+                            console.log(`Adding skill: ${skill.name}`);
+                            this.game.player.addSkill(skill);
+                        }
+                    });
+                    
+                    // Update UI
+                    if (this.game.uiSystem && this.game.uiSystem.updateSkillIcons) {
+                        console.log('Updating skill icons');
+                        this.game.uiSystem.updateSkillIcons();
+                    }
+                    
+                    // Show confirmation message
+                    console.log('Showing confirmation message');
+                    this.game.uiSystem.showAlert(`Specialization unlocked: ${spec.name}`, 3);
+                }
+                
+                // Reset the pending flag
+                console.log('Resetting pending specialization unlock flag');
+                this.pendingSpecializationUnlock = false;
+            } else {
+                console.log(`Specialization ${newSpecId} is already selected`);
+            }
+        } else {
+            // Original behavior for game start
+            console.log('Handling game start specialization selection');
+            this.game.selectedSpecializations = this.selectedSpecializations;
+            
+            // Apply initial skills
+            this.selectedSpecializations.forEach(specId => {
+                const spec = this.getSpecializationById(specId);
+                if (spec) {
+                    console.log(`Applying specialization: ${spec.name}`);
+                    
+                    // Apply level 1 active skills
+                    spec.skills.forEach(skill => {
+                        if (skill.level > 0) {
+                            console.log(`Adding skill: ${skill.name}`);
+                            this.game.player.addSkill(skill);
+                        }
+                    });
                 }
             });
-        });
+        }
     }
     
     /**
@@ -960,7 +1162,14 @@ class SpecializationSystem {
      * @returns {Object} The specialization object
      */
     getSpecializationById(id) {
-        return this.availableSpecializations.find(spec => spec.id === id);
+        console.log(`Looking for specialization with ID: ${id}`);
+        const spec = this.availableSpecializations.find(spec => spec.id === id);
+        if (spec) {
+            console.log(`Found specialization: ${spec.name}`);
+        } else {
+            console.error(`Specialization with ID ${id} not found`);
+        }
+        return spec;
     }
     
     /**
@@ -969,7 +1178,10 @@ class SpecializationSystem {
      * @returns {boolean} True if the player has the specialization
      */
     hasSpecialization(id) {
-        return this.selectedSpecializations.includes(id);
+        if (!this.game.selectedSpecializations) {
+            this.game.selectedSpecializations = [];
+        }
+        return this.game.selectedSpecializations.includes(id);
     }
     
     /**
@@ -1022,10 +1234,69 @@ class SpecializationSystem {
      * @param {HTMLElement} container - The container element
      */
     renderSkillTree(container) {
+        console.log('Rendering skill tree...');
+        
+        if (!container) {
+            console.error('Skill tree container is null or undefined');
+            return;
+        }
+        
         container.innerHTML = '';
         
-        this.selectedSpecializations.forEach(specId => {
+        // Make sure game.selectedSpecializations is initialized
+        if (!this.game.selectedSpecializations) {
+            console.log('Initializing empty selectedSpecializations array');
+            this.game.selectedSpecializations = [];
+        }
+        
+        console.log('Selected specializations:', this.game.selectedSpecializations);
+        
+        // If no specializations are selected yet, show a message
+        if (this.game.selectedSpecializations.length === 0) {
+            console.log('No specializations selected, showing empty message');
+            
+            const emptyMessage = document.createElement('div');
+            emptyMessage.className = 'empty-skill-tree-message';
+            
+            let message = '<h3>No Specializations Unlocked Yet</h3>';
+            
+            // Check if any specializations can be unlocked
+            if (this.pendingSpecializationUnlock) {
+                console.log('Specialization can be unlocked, showing unlock button');
+                message += `<p>You can unlock your first specialization now!</p>
+                <button id="unlock-specialization-button" class="primary-button">Choose Specialization</button>`;
+            } else {
+                const nextUnlockLevel = this.specializationUnlockLevels[0];
+                console.log(`Next specialization unlocks at level ${nextUnlockLevel}`);
+                message += `<p>Reach level ${nextUnlockLevel} to unlock your first specialization.</p>`;
+            }
+            
+            emptyMessage.innerHTML = message;
+            container.appendChild(emptyMessage);
+            
+            // Add event listener for the unlock button if it exists
+            const unlockButton = document.getElementById('unlock-specialization-button');
+            if (unlockButton) {
+                console.log('Adding event listener to unlock button');
+                unlockButton.addEventListener('click', () => {
+                    this.showSpecializationSelection();
+                });
+            }
+            
+            return;
+        }
+        
+        // Render existing specializations
+        console.log('Rendering specializations:', this.game.selectedSpecializations);
+        
+        this.game.selectedSpecializations.forEach(specId => {
             const spec = this.getSpecializationById(specId);
+            if (!spec) {
+                console.error(`Specialization with ID ${specId} not found`);
+                return;
+            }
+            
+            console.log(`Rendering specialization: ${spec.name}`);
             
             const specElement = document.createElement('div');
             specElement.className = 'skill-tree';
@@ -1042,6 +1313,8 @@ class SpecializationSystem {
             const skillsContainer = specElement.querySelector('.skill-tree-skills');
             
             spec.skills.forEach(skill => {
+                console.log(`Rendering skill: ${skill.name} (Level ${skill.level}/${skill.maxLevel})`);
+                
                 const skillElement = document.createElement('div');
                 skillElement.className = 'skill';
                 skillElement.classList.add(skill.level > 0 ? 'unlocked' : 'locked');

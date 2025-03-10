@@ -55,23 +55,16 @@ class Game {
     }
     
     /**
-     * Resize the canvas to fill the window
+     * Resize the canvas to fit the window
      */
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
         
-        // Update renderer with new dimensions
+        // Update renderer if it exists
         if (this.renderer) {
             this.renderer.updateDimensions(this.canvas.width, this.canvas.height);
         }
-    }
-    
-    /**
-     * Initialize the specialization selection screen
-     */
-    initializeSpecializationSelection() {
-        this.specializationSystem.initializeSelectionScreen();
     }
     
     /**
@@ -86,8 +79,8 @@ class Game {
         console.log('Player initialized:', this.player);
         console.log('Player inventory:', this.player.inventory);
         
-        // Apply selected specializations
-        this.specializationSystem.applySelectedSpecializations();
+        // Initialize with empty specializations
+        this.selectedSpecializations = [];
         
         // Initialize game state
         this.isRunning = true;
@@ -319,21 +312,32 @@ class Game {
      */
     levelUp() {
         this.level++;
+        console.log(`Level up! Now level ${this.level}`);
+        
         this.xp -= this.xpToNextLevel;
         this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.5); // Increase XP required for next level
         
         // Apply level up bonuses
         if (this.player) {
+            console.log('Applying level up bonuses to player');
             this.player.onLevelUp();
         }
         
         // Update skill points
+        console.log('Adding skill point');
         this.specializationSystem.addSkillPoint();
         
-        console.log(`Level up! Now level ${this.level}`);
-        
         // Show level up notification
+        console.log('Showing level up notification');
         this.uiSystem.showLevelUpNotification();
+        
+        // Check if a specialization can be unlocked at this level
+        console.log('Checking for specialization unlock');
+        if (this.specializationSystem.checkSpecializationUnlock()) {
+            // Show a notification that a specialization is available
+            console.log('Specialization available, showing notification');
+            this.uiSystem.showAlert('New specialization available! Check the Skills tab.', 5, true);
+        }
     }
     
     /**
@@ -646,28 +650,52 @@ class Game {
     }
     
     /**
-     * Load skill tree content
+     * Load the skill tree tab content
      */
     loadSkillTree() {
-        const skillsContent = document.getElementById('skills-content');
+        console.log('Loading skill tree tab content...');
         
-        // Clear existing content
-        skillsContent.innerHTML = '';
+        // Check if there's a pending specialization unlock
+        if (this.specializationSystem && this.specializationSystem.pendingSpecializationUnlock) {
+            console.log('Pending specialization unlock, showing selection UI');
+            this.specializationSystem.showSpecializationSelection();
+            return;
+        }
         
-        // Create skill tree layout
-        const skillTreeLayout = document.createElement('div');
-        skillTreeLayout.className = 'skill-tree-layout';
-        skillTreeLayout.innerHTML = `
-            <div class="skill-tree-header">
-                <h3>Available Skill Points: <span id="available-skill-points">${this.skillPoints}</span></h3>
+        const container = document.getElementById('skills-content');
+        if (!container) {
+            console.error('Skills content container not found');
+            return;
+        }
+        
+        // Initialize skill points if not already done
+        if (typeof this.skillPoints === 'undefined') {
+            console.log('Initializing skill points to 0');
+            this.skillPoints = 0;
+        }
+        
+        console.log(`Creating skill tree UI with ${this.skillPoints} skill points`);
+        
+        container.innerHTML = `
+            <div class="skill-tree-layout">
+                <div class="skill-tree-header">
+                    <h3>Skill Trees</h3>
+                    <div id="skill-points-header">
+                        <p>Available Skill Points: <span id="skill-points">${this.skillPoints}</span></p>
+                    </div>
+                </div>
+                <div id="skill-trees-container"></div>
             </div>
-            <div id="skill-trees-container"></div>
         `;
         
-        skillsContent.appendChild(skillTreeLayout);
-        
         // Render skill trees
-        this.specializationSystem.renderSkillTree(document.getElementById('skill-trees-container'));
+        const skillTreesContainer = document.getElementById('skill-trees-container');
+        if (skillTreesContainer && this.specializationSystem) {
+            console.log('Rendering skill trees');
+            this.specializationSystem.renderSkillTree(skillTreesContainer);
+        } else {
+            console.error('Skill trees container not found or specialization system not initialized');
+        }
     }
     
     /**
