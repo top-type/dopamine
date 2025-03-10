@@ -16,21 +16,11 @@ const ITEM_TYPES = {
     primaryWeapon: {
         slot: 'primaryWeapon',
         baseStats: {
-            damage: 10,
+            damage: 25,
             fireRate: 0.5, // shots per second
             projectileSpeed: 10,
             critChance: 0.05,
             critDamage: 1.5
-        }
-    },
-    secondaryWeapon: {
-        slot: 'secondaryWeapon',
-        baseStats: {
-            damage: 15,
-            fireRate: 0.3,
-            projectileSpeed: 8,
-            critChance: 0.08,
-            critDamage: 1.8
         }
     },
     armor: {
@@ -229,85 +219,6 @@ const ITEM_TEMPLATES = {
                     fireRate: 0.4,
                     projectileSpeed: 10,
                     critChance: 0.25,
-                    critDamage: 3.0
-                }
-            }
-        ]
-    },
-    
-    // Secondary Weapons
-    secondaryWeapon: {
-        common: [
-            {
-                id: 'missile_launcher',
-                name: 'Missile Launcher',
-                description: 'Fires guided missiles with moderate damage.',
-                icon: '🚀',
-                stats: {
-                    damage: 15,
-                    fireRate: 0.3,
-                    projectileSpeed: 8,
-                    critChance: 0.08,
-                    critDamage: 1.8
-                }
-            }
-        ],
-        uncommon: [
-            {
-                id: 'ion_cannon',
-                name: 'Ion Cannon',
-                description: 'Disrupts enemy shields with ionized particles.',
-                icon: '🚀',
-                stats: {
-                    damage: 18,
-                    fireRate: 0.25,
-                    projectileSpeed: 9,
-                    critChance: 0.1,
-                    critDamage: 1.9
-                }
-            }
-        ],
-        rare: [
-            {
-                id: 'railgun',
-                name: 'Railgun',
-                description: 'Electromagnetic weapon with high velocity projectiles.',
-                icon: '🚀',
-                stats: {
-                    damage: 25,
-                    fireRate: 0.2,
-                    projectileSpeed: 20,
-                    critChance: 0.15,
-                    critDamage: 2.0
-                }
-            }
-        ],
-        epic: [
-            {
-                id: 'antimatter_torpedo',
-                name: 'Antimatter Torpedo',
-                description: 'Devastating torpedo that annihilates matter on contact.',
-                icon: '🚀',
-                stats: {
-                    damage: 40,
-                    fireRate: 0.15,
-                    projectileSpeed: 7,
-                    critChance: 0.2,
-                    critDamage: 2.5
-                }
-            }
-        ],
-        legendary: [
-            {
-                id: 'supernova_launcher',
-                name: 'Supernova Launcher',
-                description: 'Legendary weapon that creates a miniature supernova on impact.',
-                icon: '🚀',
-                stats: {
-                    damage: 60,
-                    fireRate: 0.1,
-                    projectileSpeed: 6,
-                    critChance: 0.3,
                     critDamage: 3.0
                 }
             }

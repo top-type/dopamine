@@ -1088,7 +1088,7 @@ class SpecializationSystem {
     }
     
     /**
-     * Add a skill point when the player levels up
+     * Add a skill point to the player
      */
     addSkillPoint() {
         // Initialize skillPoints if it doesn't exist
@@ -1105,5 +1105,35 @@ class SpecializationSystem {
         if (this.game.uiSystem && this.game.uiSystem.updateStatsDisplay) {
             this.game.uiSystem.updateStatsDisplay();
         }
+    }
+    
+    /**
+     * Get specialization data for saving
+     */
+    getSpecializationData() {
+        return this.selectedSpecializations || [];
+    }
+    
+    /**
+     * Get skill data for saving
+     */
+    getSkillData() {
+        // Return an empty array for now, can be expanded later to save skill levels
+        return [];
+    }
+    
+    /**
+     * Load specialization data from save
+     */
+    loadSpecializationData(specializationData) {
+        this.selectedSpecializations = specializationData || [];
+    }
+    
+    /**
+     * Load skill data from save
+     */
+    loadSkillData(skillData) {
+        // Placeholder for loading skill data
+        // Can be expanded later to load skill levels
     }
 } 

@@ -93,6 +93,12 @@ class Item extends Entity {
         
         // Check for player collection
         if (this.game.player && this.isCollidingWith(this.game.player)) {
+            console.log('Item collision detected with player');
+            console.log('Item position:', this.x, this.y);
+            console.log('Player position:', this.game.player.x, this.game.player.y);
+            console.log('Item radius:', this.radius);
+            console.log('Player radius:', this.game.player.radius);
+            console.log('Distance:', this.distanceTo(this.game.player));
             this.collect();
         }
         
@@ -105,22 +111,94 @@ class Item extends Entity {
      * Collect the item
      */
     collect() {
-        // Add to player's inventory
-        const collected = this.game.equipmentSystem.addToInventory(this.itemData);
+        console.log('=== ITEM COLLECTION DEBUGGING ===');
+        console.log('Item collect method called with item data:', this.itemData);
+        
+        // Make sure the item has an ID
+        if (!this.itemData.id) {
+            this.itemData.id = 'item_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            console.log('Generated new ID for item:', this.itemData.id);
+        }
+        
+        // Make sure the item has all required properties
+        if (!this.itemData.name) {
+            console.error('Item missing name property:', this.itemData);
+            return;
+        }
+        
+        // If slot is missing but type exists, use type as slot
+        if (!this.itemData.slot && this.itemData.type) {
+            console.log(`Item missing slot property, using type '${this.itemData.type}' as slot`);
+            this.itemData.slot = this.itemData.type;
+        } else if (!this.itemData.slot) {
+            console.error('Item missing slot property and no type to use as fallback:', this.itemData);
+            return;
+        }
+        
+        if (!this.itemData.rarity) {
+            console.error('Item missing rarity property:', this.itemData);
+            return;
+        }
+        
+        console.log('Item data after validation:', JSON.stringify(this.itemData));
+        
+        let collected = false;
+        
+        // Try to add to player's inventory using equipment system
+        if (this.game.equipmentSystem) {
+            console.log('Attempting to add item via equipment system...');
+            collected = this.game.equipmentSystem.addToInventory(this.itemData);
+            console.log('Equipment system result:', collected);
+        } else {
+            console.log('Equipment system not available');
+        }
+        
+        // If that fails, try adding directly to player's inventory
+        if (!collected && this.game.player) {
+            console.log('Attempting to add item directly to player inventory...');
+            collected = this.game.player.addItemToInventory(this.itemData);
+            console.log('Direct player inventory add result:', collected);
+        } else if (!this.game.player) {
+            console.log('Player object not available for direct inventory add');
+        }
+        
+        console.log('Final item collection result:', collected);
+        
+        if (this.game.player && this.game.player.inventory) {
+            console.log('Player inventory after collection (length):', this.game.player.inventory.length);
+            console.log('Player inventory contents:', JSON.stringify(this.game.player.inventory));
+        } else {
+            console.log('Player inventory not available to check');
+        }
         
         if (collected) {
             // Create collection effect
-            this.game.particleSystem.createExplosion(this.x, this.y, this.color, 10, 2, 50);
+            if (this.game.particleSystem) {
+                this.game.particleSystem.createExplosion(this.x, this.y, this.color, 10, 2, 50);
+            }
             
             // Play collection sound
-            this.game.audioSystem.playSound('powerup');
+            if (this.game.audioSystem) {
+                this.game.audioSystem.playSound('powerup');
+            }
             
             // Show notification
-            this.game.uiSystem.showItemNotification(this.itemData);
+            if (this.game.uiSystem) {
+                this.game.uiSystem.showItemNotification(this.itemData);
+            }
             
             // Mark for removal
             this.shouldRemove = true;
+            console.log('Item marked for removal');
+            
+            // DO NOT force open the inventory panel - just show a notification
+            // and let the player open the inventory through the menu when they want to
+            
+            // Don't try to save the game here - it's causing errors
+            // The inventory will be saved when the player opens the menu or when the game is closed
         }
+        
+        console.log('=== END ITEM COLLECTION DEBUGGING ===');
     }
     
     /**
@@ -156,11 +234,6 @@ class Item extends Entity {
                 ctx.lineTo(-this.radius / 2, this.radius);
                 ctx.closePath();
                 ctx.fill();
-                break;
-                
-            case 'secondaryWeapon':
-                // Secondary weapon (square)
-                ctx.fillRect(-this.radius / 2, -this.radius / 2, this.radius, this.radius);
                 break;
                 
             case 'armor':

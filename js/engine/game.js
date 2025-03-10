@@ -78,24 +78,45 @@ class Game {
      * Start the game
      */
     start() {
-        console.log('Starting game...');
+        console.log('=== GAME START DEBUGGING ===');
+        console.log('Game start called');
         
-        // Create player
+        // Initialize player
         this.player = new Player(this);
+        console.log('Player initialized:', this.player);
+        console.log('Player inventory:', this.player.inventory);
         
         // Apply selected specializations
         this.specializationSystem.applySelectedSpecializations();
         
+        // Initialize game state
+        this.isRunning = true;
+        this.isPaused = false;
+        this.gameTime = 0;
+        this.lastTimestamp = performance.now();
+        
         // Initialize UI
         this.uiSystem.initialize();
         
+        // Ensure inventory is properly initialized
+        if (!this.player.inventory) {
+            console.log('Player inventory not initialized, creating empty array');
+            this.player.inventory = [];
+        }
+        
+        // Update inventory display
+        console.log('Updating inventory display on game start');
+        this.uiSystem.updateInventoryDisplay();
+        
+        // Save initial game state
+        console.log('Saving initial game state');
+        this.saveSystem.saveGame(this);
+        
         // Start game loop
-        this.isRunning = true;
-        this.isPaused = false;
-        this.lastTimestamp = performance.now();
         requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
         
-        console.log('Game started');
+        console.log('Game started successfully');
+        console.log('=== END GAME START DEBUGGING ===');
     }
     
     /**
@@ -324,12 +345,37 @@ class Game {
     }
     
     /**
-     * Open the inventory screen
+     * Open the inventory screen through the menu
      */
     openInventory() {
+        console.log('Game openInventory called - opening inventory through menu system');
         this.pause();
-        document.getElementById('menu-screen').classList.remove('hidden');
-        document.getElementById('tab-inventory').click();
+        
+        // Try to save the game before opening the menu
+        try {
+            console.log('Saving game before opening inventory...');
+            this.saveSystem.saveGame(this);
+            console.log('Game saved successfully');
+        } catch (error) {
+            console.error('Error saving game before opening inventory:', error);
+            // Continue opening the inventory even if saving fails
+        }
+        
+        // Show the menu screen
+        const menuScreen = document.getElementById('menu-screen');
+        if (menuScreen) {
+            menuScreen.classList.remove('hidden');
+            
+            // Click the inventory tab
+            const inventoryTab = document.getElementById('tab-inventory');
+            if (inventoryTab) {
+                inventoryTab.click();
+            } else {
+                console.error('Inventory tab not found in DOM');
+            }
+        } else {
+            console.error('Menu screen not found in DOM');
+        }
     }
     
     /**
@@ -345,30 +391,55 @@ class Game {
      * Load inventory content
      */
     loadInventory() {
+        console.log('=== LOAD INVENTORY DEBUGGING ===');
+        console.log('loadInventory called');
+        
         const inventoryContent = document.getElementById('inventory-content');
         
+        if (!inventoryContent) {
+            console.error('Inventory content element not found in DOM');
+            console.log('=== END LOAD INVENTORY DEBUGGING ===');
+            return;
+        }
+        
+        if (!this.player) {
+            console.error('Player does not exist in loadInventory');
+            console.log('=== END LOAD INVENTORY DEBUGGING ===');
+            return;
+        }
+        
+        if (!this.player.inventory) {
+            console.log('Player inventory does not exist, initializing empty array');
+            this.player.inventory = [];
+        }
+        
+        console.log('Player inventory before loading (length):', this.player.inventory.length);
+        console.log('Player inventory contents:', JSON.stringify(this.player.inventory));
+        
         // Clear existing content
+        console.log('Clearing existing inventory content');
         inventoryContent.innerHTML = '';
         
         // Create inventory layout
+        console.log('Creating inventory layout');
         const inventoryLayout = document.createElement('div');
         inventoryLayout.className = 'inventory-layout';
         inventoryLayout.innerHTML = `
             <div class="inventory-section">
                 <h3>Equipment</h3>
-                <div id="equipment-slots" class="equipment-grid"></div>
+                <div id="equipment-slots-menu" class="equipment-grid"></div>
             </div>
             <div class="inventory-section">
-                <h3>Inventory <span id="inventory-count">0/20</span></h3>
-                <div id="inventory-grid"></div>
+                <h3>Inventory <span id="inventory-count-menu">0/20</span></h3>
+                <div id="inventory-grid-menu"></div>
             </div>
             <div class="inventory-section">
                 <h3>Item Details</h3>
-                <div id="item-details" class="hidden">
-                    <div id="item-details-content"></div>
-                    <div id="item-actions">
-                        <button id="equip-item" class="action-button">Equip</button>
-                        <button id="drop-item" class="action-button">Drop</button>
+                <div id="item-details-menu" class="hidden">
+                    <div id="item-details-content-menu"></div>
+                    <div id="item-actions-menu">
+                        <button id="equip-item-menu" class="action-button">Equip</button>
+                        <button id="drop-item-menu" class="action-button">Drop</button>
                     </div>
                 </div>
             </div>
@@ -376,9 +447,202 @@ class Game {
         
         inventoryContent.appendChild(inventoryLayout);
         
-        // Update inventory display
-        this.uiSystem.updateInventoryDisplay();
-        this.uiSystem.updateEquipmentDisplay();
+        // Verify that the inventory grid was created
+        const inventoryGrid = document.getElementById('inventory-grid-menu');
+        if (!inventoryGrid) {
+            console.error('Inventory grid element not found after creating layout');
+            console.log('=== END LOAD INVENTORY DEBUGGING ===');
+            return;
+        }
+        
+        console.log('Inventory grid created successfully');
+        
+        // Update inventory count
+        const inventoryCount = document.getElementById('inventory-count-menu');
+        if (inventoryCount) {
+            inventoryCount.textContent = `${this.player.inventory.length}/${this.player.maxInventorySize || 20}`;
+        }
+        
+        // Manually populate the inventory grid
+        if (this.player.inventory && this.player.inventory.length > 0) {
+            console.log('Populating inventory grid with items...');
+            this.player.inventory.forEach((item, index) => {
+                console.log('Adding item to menu inventory grid:', item.name, 'at index:', index);
+                
+                const itemElement = document.createElement('div');
+                itemElement.className = 'inventory-item';
+                itemElement.dataset.itemId = item.id;
+                itemElement.dataset.index = index;
+                
+                // Set rarity class
+                itemElement.classList.add(`rarity-${item.rarity}`);
+                
+                // Make sure item has an icon
+                const icon = item.icon || '📦';
+                
+                itemElement.innerHTML = `
+                    <div class="item-icon">${icon}</div>
+                    <div class="item-name">${item.name}</div>
+                `;
+                
+                // Add click event
+                itemElement.addEventListener('click', () => {
+                    this.showItemDetailsInMenu(item, null, index);
+                });
+                
+                inventoryGrid.appendChild(itemElement);
+            });
+            console.log('Finished populating inventory grid');
+        } else {
+            console.log('No items in inventory, showing empty message');
+            const emptyMessage = document.createElement('div');
+            emptyMessage.className = 'empty-inventory-message';
+            emptyMessage.textContent = 'Your inventory is empty';
+            inventoryGrid.appendChild(emptyMessage);
+        }
+        
+        // Update equipment slots
+        this.updateEquipmentSlotsInMenu();
+        
+        console.log('Inventory loaded and updated');
+        console.log('=== END LOAD INVENTORY DEBUGGING ===');
+    }
+    
+    /**
+     * Show item details in the menu
+     */
+    showItemDetailsInMenu(item, equipSlot = null, index = null) {
+        const itemDetails = document.getElementById('item-details-menu');
+        const itemDetailsContent = document.getElementById('item-details-content-menu');
+        const equipButton = document.getElementById('equip-item-menu');
+        const dropButton = document.getElementById('drop-item-menu');
+        
+        if (!itemDetails || !itemDetailsContent || !equipButton || !dropButton) {
+            console.error('Item details elements not found in menu');
+            return;
+        }
+        
+        // Show the item details panel
+        itemDetails.classList.remove('hidden');
+        
+        // Generate stats HTML
+        let statsHtml = '';
+        if (item.stats) {
+            for (const [stat, value] of Object.entries(item.stats)) {
+                const formattedStat = this.equipmentSystem.formatStatName(stat);
+                statsHtml += `<div class="stat-row">
+                    <span class="stat-name">${formattedStat}</span>
+                    <span class="stat-value">${value > 0 ? '+' : ''}${value}</span>
+                </div>`;
+            }
+        }
+        
+        // Set item details content
+        itemDetailsContent.innerHTML = `
+            <div class="item-header rarity-${item.rarity}">
+                <div class="item-icon">${item.icon || '📦'}</div>
+                <div class="item-title">
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-type">${item.type || item.slot} - ${item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1)}</div>
+                </div>
+            </div>
+            <div class="item-description">${item.description || 'No description available.'}</div>
+            <div class="item-stats">
+                ${statsHtml}
+            </div>
+        `;
+        
+        // Update button states
+        if (equipSlot) {
+            // Item is equipped
+            equipButton.textContent = 'Unequip';
+            equipButton.onclick = () => {
+                this.equipmentSystem.unequipItem(equipSlot);
+                this.loadInventory(); // Reload the inventory display
+                itemDetails.classList.add('hidden');
+            };
+        } else if (index !== null) {
+            // Item is in inventory
+            equipButton.textContent = 'Equip';
+            equipButton.onclick = () => {
+                this.equipmentSystem.equipItem(index);
+                this.loadInventory(); // Reload the inventory display
+                itemDetails.classList.add('hidden');
+            };
+            
+            dropButton.onclick = () => {
+                this.equipmentSystem.removeFromInventory(index);
+                this.loadInventory(); // Reload the inventory display
+                itemDetails.classList.add('hidden');
+            };
+        } else {
+            // Item is not in inventory or equipped (e.g., in a shop)
+            equipButton.textContent = 'Buy';
+            equipButton.style.display = 'none'; // Hide for now
+            dropButton.textContent = 'Close';
+            dropButton.onclick = () => {
+                itemDetails.classList.add('hidden');
+            };
+        }
+    }
+    
+    /**
+     * Update equipment slots in the menu
+     */
+    updateEquipmentSlotsInMenu() {
+        const equipmentSlots = document.getElementById('equipment-slots-menu');
+        if (!equipmentSlots) {
+            console.error('Equipment slots element not found in menu');
+            return;
+        }
+        
+        // Clear existing slots
+        equipmentSlots.innerHTML = '';
+        
+        // Create slots for each equipment type
+        const slotTypes = [
+            { id: 'primaryWeapon', name: 'Primary Weapon' },
+            { id: 'armor', name: 'Armor' },
+            { id: 'engine', name: 'Engine' },
+            { id: 'shield', name: 'Shield' },
+            { id: 'special', name: 'Special' },
+            { id: 'fluxCapacitorPrimary', name: 'Flux Capacitor (Primary)' },
+            { id: 'fluxCapacitorSecondary', name: 'Flux Capacitor (Secondary)' },
+            { id: 'navigationCore', name: 'Navigation Core' }
+        ];
+        
+        slotTypes.forEach(slot => {
+            const slotElement = document.createElement('div');
+            slotElement.className = 'equipment-slot';
+            slotElement.dataset.slot = slot.id;
+            
+            const slotContent = document.createElement('div');
+            slotContent.className = 'slot-content';
+            
+            // Check if there's an item equipped in this slot
+            const equippedItem = this.player.equipment[slot.id];
+            
+            if (equippedItem) {
+                slotContent.classList.remove('empty');
+                slotContent.innerHTML = `
+                    <div class="item-icon rarity-${equippedItem.rarity}">${equippedItem.icon || '📦'}</div>
+                    <div class="item-name">${equippedItem.name}</div>
+                `;
+                
+                // Add click event to show item details
+                slotContent.addEventListener('click', () => {
+                    this.showItemDetailsInMenu(equippedItem, slot.id);
+                });
+            } else {
+                slotContent.classList.add('empty');
+                slotContent.textContent = 'Empty';
+            }
+            
+            slotElement.innerHTML = `<div class="slot-label">${slot.name}</div>`;
+            slotElement.appendChild(slotContent);
+            
+            equipmentSlots.appendChild(slotElement);
+        });
     }
     
     /**

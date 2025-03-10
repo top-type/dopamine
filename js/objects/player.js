@@ -32,16 +32,9 @@ class Player extends Entity {
         
         // Weapon properties
         this.primaryWeapon = {
-            damage: 10,
+            damage: 25,
             fireRate: 5, // Shots per second
             projectileSpeed: 500,
-            lastFireTime: 0
-        };
-        
-        this.secondaryWeapon = {
-            damage: 20,
-            fireRate: 1, // Shots per second
-            projectileSpeed: 400,
             lastFireTime: 0
         };
         
@@ -50,14 +43,13 @@ class Player extends Entity {
             // Default abilities will be added by specializations
         ];
         
-        // Inventory
+        // Inventory - ensure it's initialized as an array
         this.inventory = [];
         this.maxInventorySize = 20;
         
         // Equipment slots
         this.equipment = {
             primaryWeapon: null,
-            secondaryWeapon: null,
             armor: null,
             engine: null,
             shield: null,
@@ -67,7 +59,7 @@ class Player extends Entity {
             navigationCore: null
         };
         
-        console.log('Player initialized');
+        console.log('Player initialized with empty inventory:', this.inventory);
     }
     
     /**
@@ -145,7 +137,7 @@ class Player extends Entity {
     }
     
     /**
-     * Handle weapon firing based on input
+     * Handle weapons based on input
      */
     handleWeapons(deltaTime) {
         const currentTime = this.game.gameTime;
@@ -157,16 +149,6 @@ class Player extends Entity {
             if (timeSinceLastFire >= 1 / this.primaryWeapon.fireRate) {
                 this.firePrimaryWeapon();
                 this.primaryWeapon.lastFireTime = currentTime;
-            }
-        }
-        
-        // Secondary weapon
-        if (this.game.input.isKeyDown('secondary')) {
-            const timeSinceLastFire = currentTime - this.secondaryWeapon.lastFireTime;
-            
-            if (timeSinceLastFire >= 1 / this.secondaryWeapon.fireRate) {
-                this.fireSecondaryWeapon();
-                this.secondaryWeapon.lastFireTime = currentTime;
             }
         }
     }
@@ -261,39 +243,6 @@ class Player extends Entity {
         
         // Play sound
         this.game.audioSystem.playSound('laser1');
-    }
-    
-    /**
-     * Fire the secondary weapon
-     */
-    fireSecondaryWeapon() {
-        // Calculate projectile spawn position (in front of the ship)
-        const spawnX = this.x + Math.cos(this.rotation) * this.radius;
-        const spawnY = this.y + Math.sin(this.rotation) * this.radius;
-        
-        // Create projectile
-        const projectile = new Projectile(
-            this.game,
-            spawnX,
-            spawnY,
-            this.secondaryWeapon.projectileSpeed,
-            this.rotation,
-            this.secondaryWeapon.damage,
-            'player',
-            '#ffaa00'
-        );
-        
-        // Make secondary projectile larger
-        projectile.radius = 8;
-        
-        // Add to game projectiles
-        this.game.projectiles.push(projectile);
-        
-        // Create weapon fire effect
-        this.game.particleSystem.createWeaponFire(spawnX, spawnY, this.rotation, '#ffaa00');
-        
-        // Play sound
-        this.game.audioSystem.playSound('laser2');
     }
     
     /**
@@ -428,7 +377,6 @@ class Player extends Entity {
         
         // Increase damage
         this.primaryWeapon.damage += 2;
-        this.secondaryWeapon.damage += 4;
         
         // Update UI
         if (this.game.uiSystem && this.game.uiSystem.updateShieldDisplay) {
@@ -440,7 +388,7 @@ class Player extends Entity {
             this.game.audioSystem.playSound('level_up');
         }
         
-        console.log(`Player leveled up! New shield: ${this.maxShield}, New damage: ${this.primaryWeapon.damage}/${this.secondaryWeapon.damage}`);
+        console.log(`Player leveled up! New shield: ${this.maxShield}, New damage: ${this.primaryWeapon.damage}`);
     }
     
     /**
@@ -477,7 +425,6 @@ class Player extends Entity {
                     switch (effect.type) {
                         case 'damage':
                             this.primaryWeapon.damage *= (1 + effect.value);
-                            this.secondaryWeapon.damage *= (1 + effect.value);
                             console.log(`Applied damage boost: ${effect.value * 100}%`);
                             break;
                             
@@ -495,7 +442,6 @@ class Player extends Entity {
                             
                         case 'fireRate':
                             this.primaryWeapon.fireRate *= (1 + effect.value);
-                            this.secondaryWeapon.fireRate *= (1 + effect.value);
                             console.log(`Applied fire rate boost: ${effect.value * 100}%`);
                             break;
                             
@@ -565,5 +511,68 @@ class Player extends Entity {
             ctx.fill();
             ctx.globalAlpha = 1;
         }
+    }
+    
+    /**
+     * Add an item to the inventory
+     */
+    addItemToInventory(itemData) {
+        console.log('=== PLAYER ADD ITEM TO INVENTORY DEBUGGING ===');
+        console.log('Player addItemToInventory called with:', JSON.stringify(itemData));
+        
+        // Initialize inventory if it doesn't exist
+        if (!this.inventory) {
+            console.log('Player inventory does not exist, initializing empty array');
+            this.inventory = [];
+        }
+        
+        // Check if inventory is full
+        if (this.inventory.length >= this.maxInventorySize) {
+            console.log('Inventory is full, max size:', this.maxInventorySize);
+            console.log('=== END PLAYER ADD ITEM TO INVENTORY DEBUGGING ===');
+            return false;
+        }
+        
+        // Create a deep copy of the item data
+        const itemCopy = JSON.parse(JSON.stringify(itemData));
+        
+        // Ensure the item has an ID
+        if (!itemCopy.id) {
+            itemCopy.id = 'item_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            console.log('Generated new ID for item:', itemCopy.id);
+        }
+        
+        // If slot is missing but type exists, use type as slot
+        if (!itemCopy.slot && itemCopy.type) {
+            console.log(`Item missing slot property, using type '${itemCopy.type}' as slot`);
+            itemCopy.slot = itemCopy.type;
+        }
+        
+        // Add to inventory
+        console.log('Player inventory before adding item (length):', this.inventory.length);
+        this.inventory.push(itemCopy);
+        console.log('Player inventory after adding item (length):', this.inventory.length);
+        
+        // Log the entire inventory for debugging
+        console.log('Player inventory contents after adding item:', JSON.stringify(this.inventory));
+        console.log('=== END PLAYER ADD ITEM TO INVENTORY DEBUGGING ===');
+        return true;
+    }
+    
+    /**
+     * Remove an item from the inventory by ID
+     */
+    removeItemFromInventory(itemId) {
+        if (!this.inventory) return null;
+        
+        const index = this.inventory.findIndex(item => item.id === itemId);
+        
+        if (index !== -1) {
+            const item = this.inventory[index];
+            this.inventory.splice(index, 1);
+            return item;
+        }
+        
+        return null;
     }
 } 

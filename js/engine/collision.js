@@ -20,6 +20,16 @@ class CollisionSystem {
             }
         }
         
+        // Check player-item collisions
+        if (game.player) {
+            for (const entity of game.entities) {
+                if (entity.type === 'item' && this.checkCircleCollision(game.player, entity)) {
+                    // Collect the item
+                    entity.collect();
+                }
+            }
+        }
+        
         // Check projectile-entity collisions
         for (const projectile of game.projectiles) {
             // Skip projectiles that have already hit something

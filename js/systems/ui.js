@@ -95,10 +95,6 @@ class UISystem {
                         <div class="weapon-icon">🔫</div>
                         <div class="weapon-label">Primary [SPACE]</div>
                     </div>
-                    <div class="weapon-slot secondary">
-                        <div class="weapon-icon">💥</div>
-                        <div class="weapon-label">Secondary [CTRL]</div>
-                    </div>
                 </div>
                 
                 <div id="skill-container"></div>
@@ -136,10 +132,6 @@ class UISystem {
                     <div class="equipment-grid">
                         <div class="equipment-slot" data-slot="primaryWeapon">
                             <div class="slot-label">Primary Weapon</div>
-                            <div class="slot-content empty"></div>
-                        </div>
-                        <div class="equipment-slot" data-slot="secondaryWeapon">
-                            <div class="slot-label">Secondary Weapon</div>
                             <div class="slot-content empty"></div>
                         </div>
                         <div class="equipment-slot" data-slot="armor">
@@ -288,8 +280,9 @@ class UISystem {
      * Show an alert message to the player
      * @param {string} message - The message to display
      * @param {number} duration - How long to show the message in seconds
+     * @param {boolean} isHTML - Whether the message contains HTML
      */
-    showAlert(message, duration = 2) {
+    showAlert(message, duration = 2, isHTML = false) {
         // Check if an alert container already exists
         let alertContainer = document.getElementById('alert-container');
         
@@ -303,7 +296,13 @@ class UISystem {
         // Create the alert element
         const alert = document.createElement('div');
         alert.className = 'game-alert';
-        alert.textContent = message;
+        
+        // Set content as text or HTML
+        if (isHTML) {
+            alert.innerHTML = message;
+        } else {
+            alert.textContent = message;
+        }
         
         // Check if this is a boss alert
         if (message.includes('Destroyer') || message.includes('Dreadnought')) {
@@ -329,8 +328,31 @@ class UISystem {
             // Remove from DOM after fade out animation
             setTimeout(() => {
                 alertContainer.removeChild(alert);
-            }, 500); // Match this to CSS transition time
+            }, 500);
         }, duration * 1000);
+    }
+    
+    /**
+     * Show item notification when player collects an item
+     * @param {Object} itemData - The item data
+     */
+    showItemNotification(itemData) {
+        // Get rarity color
+        const rarityColors = {
+            common: '#aaaaaa',
+            uncommon: '#55aa55',
+            rare: '#5555ff',
+            epic: '#aa55aa',
+            legendary: '#ffaa00'
+        };
+        
+        const color = rarityColors[itemData.rarity] || '#ffffff';
+        
+        // Create message with colored item name
+        const message = `Collected: <span style="color: ${color}">${itemData.name}</span>`;
+        
+        // Show alert with HTML content
+        this.showAlert(message, 3, true);
     }
     
     /**
@@ -441,17 +463,55 @@ class UISystem {
      * Open the inventory panel
      */
     openInventory() {
+        console.log('=== OPEN INVENTORY DEBUGGING ===');
+        console.log('openInventory called');
+        
+        if (!this.game.player) {
+            console.error('Player does not exist in openInventory');
+            console.log('=== END OPEN INVENTORY DEBUGGING ===');
+            return;
+        }
+        
+        if (!this.game.player.inventory) {
+            console.log('Player inventory does not exist, initializing empty array');
+            this.game.player.inventory = [];
+        }
+        
+        console.log('Player inventory before opening (length):', this.game.player.inventory.length);
+        console.log('Player inventory contents:', JSON.stringify(this.game.player.inventory));
+        
         if (this.isSkillTreeOpen) {
+            console.log('Skill tree is open, closing it first');
             this.closeSkillTree();
         }
         
-        document.getElementById('inventory-panel').classList.remove('hidden');
-        document.getElementById('menu-screen').classList.add('hidden');
+        const inventoryPanel = document.getElementById('inventory-panel');
+        const menuScreen = document.getElementById('menu-screen');
+        
+        if (!inventoryPanel) {
+            console.error('Inventory panel not found in DOM');
+            console.log('=== END OPEN INVENTORY DEBUGGING ===');
+            return;
+        }
+        
+        if (!menuScreen) {
+            console.error('Menu screen not found in DOM');
+            console.log('=== END OPEN INVENTORY DEBUGGING ===');
+            return;
+        }
+        
+        console.log('Showing inventory panel, hiding menu screen');
+        inventoryPanel.classList.remove('hidden');
+        menuScreen.classList.add('hidden');
         this.isInventoryOpen = true;
         this.game.pause();
         
         // Update inventory display
+        console.log('Updating inventory display...');
         this.updateInventoryDisplay();
+        
+        console.log('Inventory opened and updated');
+        console.log('=== END OPEN INVENTORY DEBUGGING ===');
     }
     
     /**
@@ -468,39 +528,104 @@ class UISystem {
      * Update the inventory display
      */
     updateInventoryDisplay() {
+        console.log('=== UI INVENTORY DISPLAY UPDATE DEBUGGING ===');
+        console.log('UI updateInventoryDisplay called');
+        
+        // Get inventory elements
+        const inventoryPanel = document.getElementById('inventory-panel');
         const inventoryGrid = document.getElementById('inventory-grid');
         const inventoryCount = document.getElementById('inventory-count');
         
+        // Check if inventory panel exists
+        if (!inventoryPanel) {
+            console.error('Inventory panel not found in DOM');
+            console.log('=== END UI INVENTORY DISPLAY UPDATE DEBUGGING ===');
+            return;
+        }
+        
+        // Check if inventory grid exists
+        if (!inventoryGrid) {
+            console.error('Inventory grid not found in DOM');
+            console.log('=== END UI INVENTORY DISPLAY UPDATE DEBUGGING ===');
+            return;
+        }
+        
+        // Check if inventory count exists
+        if (!inventoryCount) {
+            console.error('Inventory count not found in DOM');
+            console.log('=== END UI INVENTORY DISPLAY UPDATE DEBUGGING ===');
+            return;
+        }
+        
+        if (!this.game.player) {
+            console.error('Player does not exist in UI updateInventoryDisplay');
+            console.log('=== END UI INVENTORY DISPLAY UPDATE DEBUGGING ===');
+            return;
+        }
+        
+        // Initialize inventory array if it doesn't exist
+        if (!this.game.player.inventory) {
+            console.log('Initializing player inventory array in UI');
+            this.game.player.inventory = [];
+        }
+        
+        console.log('Player inventory in UI (length):', this.game.player.inventory.length);
+        console.log('Player inventory contents:', JSON.stringify(this.game.player.inventory));
+        console.log('Inventory panel visibility:', inventoryPanel.classList.contains('hidden') ? 'hidden' : 'visible');
+        
         // Clear existing items
+        console.log('Clearing existing inventory grid items');
         inventoryGrid.innerHTML = '';
         
         // Update inventory count
-        inventoryCount.textContent = `${this.game.player.inventory.length}/20`;
+        inventoryCount.textContent = `${this.game.player.inventory.length}/${this.game.player.maxInventorySize || 20}`;
+        console.log('Updated inventory count display:', inventoryCount.textContent);
         
         // Add items to inventory grid
-        this.game.player.inventory.forEach(item => {
-            const itemElement = document.createElement('div');
-            itemElement.className = 'inventory-item';
-            itemElement.dataset.itemId = item.id;
-            
-            // Set rarity class
-            itemElement.classList.add(`rarity-${item.rarity}`);
-            
-            itemElement.innerHTML = `
-                <div class="item-icon">${item.icon}</div>
-                <div class="item-name">${item.name}</div>
-            `;
-            
-            // Add click event
-            itemElement.addEventListener('click', () => {
-                this.showItemDetails(item);
+        if (this.game.player.inventory && this.game.player.inventory.length > 0) {
+            console.log('Adding items to inventory grid...');
+            this.game.player.inventory.forEach((item, index) => {
+                console.log('Adding item to inventory grid:', item.name, 'at index:', index);
+                
+                const itemElement = document.createElement('div');
+                itemElement.className = 'inventory-item';
+                itemElement.dataset.itemId = item.id;
+                itemElement.dataset.index = index;
+                
+                // Set rarity class
+                itemElement.classList.add(`rarity-${item.rarity}`);
+                
+                // Make sure item has an icon
+                const icon = item.icon || '📦';
+                
+                itemElement.innerHTML = `
+                    <div class="item-icon">${icon}</div>
+                    <div class="item-name">${item.name}</div>
+                `;
+                
+                // Add click event
+                itemElement.addEventListener('click', () => {
+                    this.showItemDetails(item, null, index);
+                });
+                
+                inventoryGrid.appendChild(itemElement);
             });
-            
-            inventoryGrid.appendChild(itemElement);
-        });
+            console.log('Finished adding items to inventory grid');
+        } else {
+            console.log('No items in inventory, showing empty message');
+            const emptyMessage = document.createElement('div');
+            emptyMessage.className = 'empty-inventory-message';
+            emptyMessage.textContent = 'Your inventory is empty';
+            inventoryGrid.appendChild(emptyMessage);
+        }
+        
+        console.log('Inventory grid after update:', inventoryGrid.innerHTML);
         
         // Update equipment slots
+        console.log('Updating equipment display...');
         this.updateEquipmentDisplay();
+        
+        console.log('=== END UI INVENTORY DISPLAY UPDATE DEBUGGING ===');
     }
     
     /**
@@ -540,31 +665,30 @@ class UISystem {
      * @param {Object} item - The item to show details for
      * @param {string} [equipSlot] - The equipment slot if the item is equipped
      */
-    showItemDetails(item, equipSlot = null) {
+    showItemDetails(item, equipSlot = null, index = null) {
         const itemDetails = document.getElementById('item-details');
         const itemDetailsContent = document.getElementById('item-details-content');
         const equipButton = document.getElementById('equip-item');
         const dropButton = document.getElementById('drop-item');
         
+        if (!itemDetails || !itemDetailsContent || !equipButton || !dropButton) {
+            console.error('Item details elements not found');
+            return;
+        }
+        
+        // Show the item details panel
         itemDetails.classList.remove('hidden');
         
-        // Build stats HTML
+        // Generate stats HTML
         let statsHtml = '';
-        for (const [stat, value] of Object.entries(item.stats)) {
-            let formattedStat = stat.replace(/([A-Z])/g, ' $1').toLowerCase();
-            formattedStat = formattedStat.charAt(0).toUpperCase() + formattedStat.slice(1);
-            
-            let formattedValue = value;
-            if (typeof value === 'number') {
-                formattedValue = value > 0 ? `+${value}` : value;
-                
-                // Add percentage for multipliers
-                if (stat.includes('Multiplier')) {
-                    formattedValue = `${(value * 100).toFixed(0)}%`;
-                }
+        if (item.stats) {
+            for (const [stat, value] of Object.entries(item.stats)) {
+                const formattedStat = this.game.equipmentSystem.formatStatName(stat);
+                statsHtml += `<div class="stat-row">
+                    <span class="stat-name">${formattedStat}</span>
+                    <span class="stat-value">${value > 0 ? '+' : ''}${value}</span>
+                </div>`;
             }
-            
-            statsHtml += `<div class="item-stat"><span>${formattedStat}:</span> ${formattedValue}</div>`;
         }
         
         // Set item details content
@@ -591,26 +715,29 @@ class UISystem {
                 this.updateInventoryDisplay();
                 itemDetails.classList.add('hidden');
             };
-        } else {
+        } else if (index !== null) {
             // Item is in inventory
             equipButton.textContent = 'Equip';
             equipButton.onclick = () => {
-                this.game.equipmentSystem.equipItem(item.id);
+                this.game.equipmentSystem.equipItem(index);
                 this.updateInventoryDisplay();
                 itemDetails.classList.add('hidden');
             };
+            
+            dropButton.onclick = () => {
+                this.game.equipmentSystem.removeFromInventory(index);
+                this.updateInventoryDisplay();
+                itemDetails.classList.add('hidden');
+            };
+        } else {
+            // Item is not in inventory or equipped (e.g., in a shop)
+            equipButton.textContent = 'Buy';
+            equipButton.style.display = 'none'; // Hide for now
+            dropButton.textContent = 'Close';
+            dropButton.onclick = () => {
+                itemDetails.classList.add('hidden');
+            };
         }
-        
-        dropButton.onclick = () => {
-            if (equipSlot) {
-                this.game.equipmentSystem.unequipItem(equipSlot);
-                this.game.player.removeItemFromInventory(item.id);
-            } else {
-                this.game.player.removeItemFromInventory(item.id);
-            }
-            this.updateInventoryDisplay();
-            itemDetails.classList.add('hidden');
-        };
     }
     
     /**

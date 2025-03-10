@@ -10,7 +10,6 @@ class InputHandler {
             left: false,
             right: false,
             primary: false,
-            secondary: false,
             special1: false,
             special2: false,
             '1': false,
@@ -31,7 +30,6 @@ class InputHandler {
             'd': 'right',
             'ArrowRight': 'right',
             ' ': 'primary',    // Space bar for primary weapon
-            'Control': 'secondary', // Ctrl for secondary weapon
             'q': 'special1',   // Q for special ability 1
             'e': 'special2',   // E for special ability 2
             '1': '1',          // Number keys for abilities

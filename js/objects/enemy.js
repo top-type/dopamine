@@ -790,8 +790,37 @@ class Enemy extends Entity {
      * Drop item on death
      */
     dropItem() {
-        // TODO: Implement item dropping
-        // This will be expanded in the item system
+        // Calculate drop chance based on enemy type
+        let dropChance = 0.1; // 10% base drop chance
+        
+        // Adjust drop chance based on enemy type
+        switch (this.enemyType) {
+            case 'elite':
+                dropChance = 0.25; // 25% for elite enemies
+                break;
+            case 'miniboss':
+                dropChance = 0.5; // 50% for minibosses
+                break;
+            case 'boss':
+            case 'megaboss':
+                dropChance = 1.0; // 100% for bosses
+                break;
+        }
+        
+        // Roll for item drop
+        if (Math.random() <= dropChance) {
+            // Generate random item based on current game depth
+            const itemData = generateRandomItem(this.game.depth);
+            
+            // Create the item entity at the enemy's position
+            const item = new Item(this.game, this.x, this.y, itemData);
+            
+            // Add to game entities
+            this.game.entities.push(item);
+            
+            // Log item drop
+            console.log(`Enemy dropped: ${itemData.name} (${itemData.rarity})`);
+        }
     }
     
     /**

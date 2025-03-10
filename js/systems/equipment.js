@@ -8,7 +8,6 @@ class EquipmentSystem {
         // Equipment slots
         this.equipmentSlots = [
             'primaryWeapon',
-            'secondaryWeapon',
             'armor',
             'engine',
             'shield',
@@ -17,10 +16,6 @@ class EquipmentSystem {
             'fluxCapacitorSecondary',
             'navigationCore'
         ];
-        
-        // Inventory
-        this.inventory = [];
-        this.maxInventorySize = 20;
         
         // Item generation settings
         this.rarityChances = {
@@ -129,23 +124,26 @@ class EquipmentSystem {
         }
         
         // Add inventory items
-        for (let i = 0; i < this.maxInventorySize; i++) {
-            const slotElement = document.createElement('div');
-            slotElement.className = 'inventory-slot';
-            slotElement.dataset.index = i;
-            
-            // Add item if exists
-            if (i < this.inventory.length) {
-                const itemElement = this.createItemElement(this.inventory[i]);
-                slotElement.appendChild(itemElement);
+        if (this.game.player && this.game.player.inventory) {
+            const maxSlots = this.game.player.maxInventorySize || 20;
+            for (let i = 0; i < maxSlots; i++) {
+                const slotElement = document.createElement('div');
+                slotElement.className = 'inventory-slot';
+                slotElement.dataset.index = i;
                 
-                // Add click handler to equip item
-                slotElement.addEventListener('click', () => {
-                    this.equipItem(i);
-                });
+                // Add item if exists
+                if (i < this.game.player.inventory.length) {
+                    const itemElement = this.createItemElement(this.game.player.inventory[i]);
+                    slotElement.appendChild(itemElement);
+                    
+                    // Add click handler to equip item
+                    slotElement.addEventListener('click', () => {
+                        this.equipItem(i);
+                    });
+                }
+                
+                inventoryGrid.appendChild(slotElement);
             }
-            
-            inventoryGrid.appendChild(slotElement);
         }
     }
     
@@ -232,21 +230,25 @@ class EquipmentSystem {
      * Show equippable items for a slot
      */
     showEquippableItems(slotName) {
+        if (!this.game.player || !this.game.player.inventory) return;
+        
         // Find items that can be equipped in this slot
-        const equippableItems = this.inventory.filter(item => item.slot === slotName);
+        const equippableItems = this.game.player.inventory.filter(item => item.slot === slotName);
         
         // Highlight equippable items
         const inventorySlots = document.querySelectorAll('.inventory-slot');
         
         inventorySlots.forEach((slot, index) => {
-            if (index < this.inventory.length) {
-                const item = this.inventory[index];
+            if (index < this.game.player.inventory.length) {
+                const item = this.game.player.inventory[index];
                 
                 if (item.slot === slotName) {
                     slot.classList.add('equippable');
                 } else {
                     slot.classList.remove('equippable');
                 }
+            } else {
+                slot.classList.remove('equippable');
             }
         });
     }
@@ -295,26 +297,120 @@ class EquipmentSystem {
      * Add an item to the inventory
      */
     addToInventory(itemData) {
+        console.log('=== EQUIPMENT SYSTEM ADD TO INVENTORY DEBUGGING ===');
+        console.log('addToInventory called with:', JSON.stringify(itemData));
+        
+        // Check if itemData is valid
+        if (!itemData) {
+            console.error('Invalid item data: null or undefined');
+            return false;
+        }
+        
+        // If slot is missing but type exists, use type as slot
+        if (!itemData.slot && itemData.type) {
+            console.log(`Item missing slot property, using type '${itemData.type}' as slot`);
+            itemData.slot = itemData.type;
+        }
+        
+        // Check if required properties exist
+        if (!itemData.name || !itemData.slot || !itemData.rarity) {
+            console.error('Item missing required properties:', JSON.stringify(itemData));
+            return false;
+        }
+        
+        // Check if player exists
+        if (!this.game.player) {
+            console.error('Player does not exist');
+            return false;
+        }
+        
+        console.log('Player object:', this.game.player);
+        console.log('Player inventory exists:', !!this.game.player.inventory);
+        
+        // Initialize inventory array if it doesn't exist
+        if (!this.game.player.inventory) {
+            console.log('Initializing player inventory array');
+            this.game.player.inventory = [];
+        }
+        
         // Check if inventory is full
-        if (this.inventory.length >= this.maxInventorySize) {
+        if (this.game.player.inventory.length >= this.game.player.maxInventorySize) {
             console.log('Inventory is full');
             return false;
         }
         
-        // Add item to inventory
-        this.inventory.push(itemData);
+        // Create a deep copy of the item data to avoid reference issues
+        const itemCopy = JSON.parse(JSON.stringify(itemData));
+        
+        // Ensure the item has an ID
+        if (!itemCopy.id) {
+            itemCopy.id = 'item_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            console.log('Generated new ID for item:', itemCopy.id);
+        }
+        
+        // Ensure the item has an icon
+        if (!itemCopy.icon) {
+            itemCopy.icon = this.getDefaultIconForSlot(itemCopy.slot);
+            console.log('Added default icon for item:', itemCopy.icon);
+        }
+        
+        // Add item to player's inventory
+        console.log('Player inventory before adding item (length):', this.game.player.inventory.length);
+        this.game.player.inventory.push(itemCopy);
+        console.log('Player inventory after adding item (length):', this.game.player.inventory.length);
+        
+        // Log the entire inventory for debugging
+        console.log('Player inventory contents after adding item:', JSON.stringify(this.game.player.inventory));
+        
+        // Update the inventory display if UI system exists
+        if (this.game.uiSystem) {
+            console.log('Updating UI inventory display from equipment system...');
+            this.game.uiSystem.updateInventoryDisplay();
+        } else {
+            console.log('UI system not available for inventory display update');
+        }
         
         console.log(`Added ${itemData.name} to inventory`);
+        console.log('=== END EQUIPMENT SYSTEM ADD TO INVENTORY DEBUGGING ===');
         return true;
+    }
+    
+    /**
+     * Get default icon for a slot
+     */
+    getDefaultIconForSlot(slot) {
+        const icons = {
+            primaryWeapon: '🔫',
+            armor: '🛡️',
+            engine: '🚀',
+            shield: '🔰',
+            special: '✨',
+            fluxCapacitorPrimary: '⚡',
+            fluxCapacitorSecondary: '⚡',
+            navigationCore: '🧭'
+        };
+        
+        return icons[slot] || '📦';
     }
     
     /**
      * Remove an item from the inventory
      */
     removeFromInventory(index) {
-        if (index >= 0 && index < this.inventory.length) {
-            const item = this.inventory[index];
-            this.inventory.splice(index, 1);
+        // Check if player exists
+        if (!this.game.player) {
+            console.log('Player does not exist');
+            return null;
+        }
+        
+        if (index >= 0 && index < this.game.player.inventory.length) {
+            const item = this.game.player.inventory[index];
+            this.game.player.inventory.splice(index, 1);
+            
+            // Update the inventory display if UI system exists
+            if (this.game.uiSystem) {
+                this.game.uiSystem.updateInventoryDisplay();
+            }
             
             console.log(`Removed ${item.name} from inventory`);
             return item;
@@ -327,9 +423,28 @@ class EquipmentSystem {
      * Equip an item from inventory
      */
     equipItem(inventoryIndex) {
-        const item = this.inventory[inventoryIndex];
+        if (!this.game.player) return;
         
-        if (!item) return;
+        // Check if inventory exists
+        if (!this.game.player.inventory) {
+            console.log('Player inventory does not exist');
+            return;
+        }
+        
+        // Check if index is valid
+        if (inventoryIndex < 0 || inventoryIndex >= this.game.player.inventory.length) {
+            console.log(`Invalid inventory index: ${inventoryIndex}`);
+            return;
+        }
+        
+        const item = this.game.player.inventory[inventoryIndex];
+        
+        if (!item) {
+            console.log('No item found at index:', inventoryIndex);
+            return;
+        }
+        
+        console.log('Equipping item:', item, 'from index:', inventoryIndex);
         
         // Check if item slot is valid
         if (!this.equipmentSlots.includes(item.slot)) {
@@ -347,17 +462,15 @@ class EquipmentSystem {
         this.removeFromInventory(inventoryIndex);
         
         // Equip item
-        if (this.game.player) {
-            this.game.player.equipment[item.slot] = item;
-            
-            // Apply item stats
-            this.applyItemStats(item);
-            
-            console.log(`Equipped ${item.name} in ${item.slot} slot`);
-        }
+        this.game.player.equipment[item.slot] = item;
+        
+        // Apply item stats
+        this.applyItemStats(item);
+        
+        console.log(`Equipped ${item.name} in ${item.slot} slot`);
         
         // Update inventory display
-        this.updateInventoryDisplay();
+        this.game.uiSystem.updateInventoryDisplay();
     }
     
     /**
@@ -382,7 +495,9 @@ class EquipmentSystem {
         console.log(`Unequipped ${item.name} from ${slotName} slot`);
         
         // Update inventory display
-        this.updateInventoryDisplay();
+        if (this.game.uiSystem) {
+            this.game.uiSystem.updateInventoryDisplay();
+        }
     }
     
     /**
@@ -413,18 +528,6 @@ class EquipmentSystem {
                 }
                 if (item.stats.projectileSpeed) {
                     this.game.player.primaryWeapon.projectileSpeed = item.stats.projectileSpeed;
-                }
-                break;
-                
-            case 'secondaryWeapon':
-                if (item.stats.damage) {
-                    this.game.player.secondaryWeapon.damage = item.stats.damage;
-                }
-                if (item.stats.fireRate) {
-                    this.game.player.secondaryWeapon.fireRate = item.stats.fireRate;
-                }
-                if (item.stats.projectileSpeed) {
-                    this.game.player.secondaryWeapon.projectileSpeed = item.stats.projectileSpeed;
                 }
                 break;
                 
@@ -476,13 +579,6 @@ class EquipmentSystem {
                 this.game.player.primaryWeapon.damage = 10;
                 this.game.player.primaryWeapon.fireRate = 5;
                 this.game.player.primaryWeapon.projectileSpeed = 500;
-                break;
-                
-            case 'secondaryWeapon':
-                // Reset to default values
-                this.game.player.secondaryWeapon.damage = 20;
-                this.game.player.secondaryWeapon.fireRate = 1;
-                this.game.player.secondaryWeapon.projectileSpeed = 400;
                 break;
                 
             case 'armor':
@@ -617,12 +713,6 @@ class EquipmentSystem {
                 baseStats.projectileSpeed = 100 * rarityMultipliers[rarity];
                 break;
                 
-            case 'secondaryWeapon':
-                baseStats.damage = 10 * rarityMultipliers[rarity] * depthMultiplier;
-                baseStats.fireRate = 0.5 + Math.random() * rarityMultipliers[rarity];
-                baseStats.projectileSpeed = 80 * rarityMultipliers[rarity];
-                break;
-                
             case 'armor':
                 baseStats.shieldCapacity = 20 * rarityMultipliers[rarity] * depthMultiplier;
                 break;
@@ -678,7 +768,6 @@ class EquipmentSystem {
         // Suffixes by slot
         const slotNames = {
             primaryWeapon: ['Blaster', 'Cannon', 'Laser'],
-            secondaryWeapon: ['Missile', 'Torpedo', 'Bomb'],
             armor: ['Plating', 'Armor', 'Shell'],
             engine: ['Thruster', 'Engine', 'Drive'],
             shield: ['Shield', 'Barrier', 'Deflector'],
@@ -702,7 +791,6 @@ class EquipmentSystem {
         // Base descriptions by slot
         const slotDescriptions = {
             primaryWeapon: 'A weapon designed for consistent damage output.',
-            secondaryWeapon: 'A powerful but slower firing weapon.',
             armor: 'Reinforced plating that increases shield capacity.',
             engine: 'Propulsion system that enhances ship speed.',
             shield: 'Energy barrier that improves shield regeneration.',
@@ -743,7 +831,8 @@ class EquipmentSystem {
      * Get inventory data for saving
      */
     getInventoryData() {
-        return [...this.inventory];
+        if (!this.game.player) return [];
+        return [...this.game.player.inventory];
     }
     
     /**
@@ -764,6 +853,12 @@ class EquipmentSystem {
      * Load inventory data from save
      */
     loadInventoryData(inventoryData) {
-        this.inventory = [...inventoryData];
+        if (!this.game.player) return;
+        this.game.player.inventory = [...inventoryData];
+        
+        // Update the inventory display if UI system exists
+        if (this.game.uiSystem) {
+            this.game.uiSystem.updateInventoryDisplay();
+        }
     }
 } 
