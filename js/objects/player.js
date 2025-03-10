@@ -238,6 +238,28 @@ class Player extends Entity {
         // Add to game projectiles
         this.game.projectiles.push(projectile);
         
+        // Check for double shot chance
+        if (this.doubleShotChance && Math.random() < this.doubleShotChance) {
+            // Create a second projectile with slight angle offset
+            const angleOffset = 0.1; // Small angle offset
+            const secondProjectile = new Projectile(
+                this.game,
+                spawnX,
+                spawnY,
+                this.primaryWeapon.projectileSpeed,
+                this.rotation + angleOffset,
+                this.primaryWeapon.damage,
+                'player',
+                '#00ffff'
+            );
+            
+            // Add to game projectiles
+            this.game.projectiles.push(secondProjectile);
+            
+            // Create weapon fire effect for second shot
+            this.game.particleSystem.createWeaponFire(spawnX, spawnY, this.rotation + angleOffset, '#00ffff');
+        }
+        
         // Create weapon fire effect
         this.game.particleSystem.createWeaponFire(spawnX, spawnY, this.rotation, '#00ffff');
         
@@ -417,52 +439,69 @@ class Player extends Entity {
             
             console.log(`Added active skill: ${skill.name} to special abilities`);
         } 
-        // If it's a passive skill, apply its effects directly
+        // If it's a passive skill, apply its effects
         else if (skill.type === 'passive') {
             // Apply passive skill effects
             if (skill.effects) {
                 skill.effects.forEach(effect => {
-                    switch (effect.type) {
-                        case 'damage':
-                            this.primaryWeapon.damage *= (1 + effect.value);
-                            console.log(`Applied damage boost: ${effect.value * 100}%`);
-                            break;
-                            
-                        case 'shield':
-                            this.maxShield *= (1 + effect.value);
-                            this.shield = this.maxShield;
-                            console.log(`Applied shield boost: ${effect.value * 100}%`);
-                            break;
-                            
-                        case 'speed':
-                            this.baseSpeed *= (1 + effect.value);
-                            this.currentSpeed = this.baseSpeed;
-                            console.log(`Applied speed boost: ${effect.value * 100}%`);
-                            break;
-                            
-                        case 'fireRate':
-                            this.primaryWeapon.fireRate *= (1 + effect.value);
-                            console.log(`Applied fire rate boost: ${effect.value * 100}%`);
-                            break;
-                            
-                        case 'shieldRegen':
-                            this.shieldRegenRate *= (1 + effect.value);
-                            console.log(`Applied shield regen boost: ${effect.value * 100}%`);
-                            break;
-                            
-                        case 'collisionDamage':
-                            this.collisionDamage *= (1 + effect.value);
-                            console.log(`Applied collision damage boost: ${effect.value * 100}%`);
-                            break;
-                            
-                        default:
-                            console.log(`Unknown effect type: ${effect.type}`);
-                            break;
-                    }
+                    this.applyPassiveEffect(effect);
                 });
             }
             
             console.log(`Applied passive skill: ${skill.name}`);
+        }
+    }
+    
+    /**
+     * Apply a passive effect to the player
+     * @param {Object} effect - The effect to apply
+     */
+    applyPassiveEffect(effect) {
+        switch (effect.type) {
+            case 'damage':
+                this.primaryWeapon.damage *= (1 + effect.value);
+                console.log(`Applied damage boost: ${effect.value * 100}%`);
+                break;
+                
+            case 'shield':
+                this.maxShield *= (1 + effect.value);
+                this.shield = this.maxShield;
+                console.log(`Applied shield boost: ${effect.value * 100}%`);
+                break;
+                
+            case 'speed':
+                this.baseSpeed *= (1 + effect.value);
+                this.currentSpeed = this.baseSpeed;
+                console.log(`Applied speed boost: ${effect.value * 100}%`);
+                break;
+                
+            case 'fireRate':
+                this.primaryWeapon.fireRate *= (1 + effect.value);
+                console.log(`Applied fire rate boost: ${effect.value * 100}%`);
+                break;
+                
+            case 'shieldRegen':
+                this.shieldRegenRate *= (1 + effect.value);
+                console.log(`Applied shield regen boost: ${effect.value * 100}%`);
+                break;
+                
+            case 'collisionDamage':
+                this.collisionDamage *= (1 + effect.value);
+                console.log(`Applied collision damage boost: ${effect.value * 100}%`);
+                break;
+                
+            case 'doubleShot':
+                // Store the double shot chance
+                if (!this.doubleShotChance) {
+                    this.doubleShotChance = 0;
+                }
+                this.doubleShotChance += effect.value;
+                console.log(`Applied double shot chance: ${effect.value * 100}%`);
+                break;
+                
+            default:
+                console.log(`Unknown effect type: ${effect.type}`);
+                break;
         }
     }
     
@@ -493,43 +532,7 @@ class Player extends Entity {
         else if (skill.type === 'passive' && skill.effects) {
             skill.effects.forEach(effect => {
                 // Apply the effect again for each level
-                switch (effect.type) {
-                    case 'damage':
-                        this.primaryWeapon.damage *= (1 + effect.value);
-                        console.log(`Applied additional damage boost: ${effect.value * 100}%`);
-                        break;
-                        
-                    case 'shield':
-                        this.maxShield *= (1 + effect.value);
-                        this.shield = this.maxShield;
-                        console.log(`Applied additional shield boost: ${effect.value * 100}%`);
-                        break;
-                        
-                    case 'speed':
-                        this.baseSpeed *= (1 + effect.value);
-                        this.currentSpeed = this.baseSpeed;
-                        console.log(`Applied additional speed boost: ${effect.value * 100}%`);
-                        break;
-                        
-                    case 'fireRate':
-                        this.primaryWeapon.fireRate *= (1 + effect.value);
-                        console.log(`Applied additional fire rate boost: ${effect.value * 100}%`);
-                        break;
-                        
-                    case 'shieldRegen':
-                        this.shieldRegenRate *= (1 + effect.value);
-                        console.log(`Applied additional shield regen boost: ${effect.value * 100}%`);
-                        break;
-                        
-                    case 'collisionDamage':
-                        this.collisionDamage *= (1 + effect.value);
-                        console.log(`Applied additional collision damage boost: ${effect.value * 100}%`);
-                        break;
-                        
-                    default:
-                        console.log(`Unknown effect type: ${effect.type}`);
-                        break;
-                }
+                this.applyPassiveEffect(effect);
             });
             
             console.log(`Updated passive skill: ${skill.name}`);

@@ -338,6 +338,26 @@ class Game {
             console.log('Specialization available, showing notification');
             this.uiSystem.showAlert('New specialization available! Check the Skills tab.', 5, true);
         }
+        
+        // Check if any skills are now available due to level requirements
+        if (this.selectedSpecializations && this.selectedSpecializations.length > 0) {
+            let newSkillsAvailable = false;
+            
+            this.selectedSpecializations.forEach(specId => {
+                const spec = this.specializationSystem.getSpecializationById(specId);
+                if (spec) {
+                    spec.skills.forEach(skill => {
+                        if (skill.requiredLevel === this.level && skill.level === 0) {
+                            newSkillsAvailable = true;
+                        }
+                    });
+                }
+            });
+            
+            if (newSkillsAvailable) {
+                this.uiSystem.showAlert('New skills available in the Skills tab!', 3, true);
+            }
+        }
     }
     
     /**
@@ -655,16 +675,20 @@ class Game {
     loadSkillTree() {
         console.log('Loading skill tree tab content...');
         
+        // Get the skills-content container
+        const container = document.getElementById('skills-content');
+        if (!container) {
+            console.error('Skills content container not found');
+            return;
+        }
+        
+        // Clear the container
+        container.innerHTML = '';
+        
         // Check if there's a pending specialization unlock
         if (this.specializationSystem && this.specializationSystem.pendingSpecializationUnlock) {
             console.log('Pending specialization unlock, showing selection UI');
             this.specializationSystem.showSpecializationSelection();
-            return;
-        }
-        
-        const container = document.getElementById('skills-content');
-        if (!container) {
-            console.error('Skills content container not found');
             return;
         }
         
@@ -676,25 +700,41 @@ class Game {
         
         console.log(`Creating skill tree UI with ${this.skillPoints} skill points`);
         
-        container.innerHTML = `
-            <div class="skill-tree-layout">
-                <div class="skill-tree-header">
-                    <h3>Skill Trees</h3>
-                    <div id="skill-points-header">
-                        <p>Available Skill Points: <span id="skill-points">${this.skillPoints}</span></p>
-                    </div>
-                </div>
-                <div id="skill-trees-container"></div>
+        // Create the skill tree layout
+        const skillTreeLayout = document.createElement('div');
+        skillTreeLayout.className = 'skill-tree-layout';
+        
+        // Create the header
+        const header = document.createElement('div');
+        header.className = 'skill-tree-header';
+        header.innerHTML = `
+            <h3>Skill Trees</h3>
+            <div id="skill-points-header">
+                <p>Available Skill Points: <span id="skill-points">${this.skillPoints}</span></p>
             </div>
         `;
+        skillTreeLayout.appendChild(header);
+        
+        // Create the skill trees container
+        const skillTreesContainer = document.createElement('div');
+        skillTreesContainer.id = 'skill-trees-container';
+        skillTreeLayout.appendChild(skillTreesContainer);
+        
+        // Add the layout to the container
+        container.appendChild(skillTreeLayout);
         
         // Render skill trees
-        const skillTreesContainer = document.getElementById('skill-trees-container');
-        if (skillTreesContainer && this.specializationSystem) {
+        if (this.specializationSystem) {
             console.log('Rendering skill trees');
             this.specializationSystem.renderSkillTree(skillTreesContainer);
         } else {
-            console.error('Skill trees container not found or specialization system not initialized');
+            console.error('Specialization system not initialized');
+            
+            // Show an error message
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'empty-skill-tree-message';
+            errorMessage.innerHTML = '<h3>Error: Specialization system not initialized</h3>';
+            skillTreesContainer.appendChild(errorMessage);
         }
     }
     

@@ -8,6 +8,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the game
     const game = new Game();
     
+    // Ensure skills-content exists
+    const menuContent = document.getElementById('menu-content');
+    if (menuContent) {
+        const skillsContent = document.getElementById('skills-content');
+        if (!skillsContent) {
+            console.log('Creating skills-content element');
+            const newSkillsContent = document.createElement('div');
+            newSkillsContent.id = 'skills-content';
+            newSkillsContent.className = 'tab-content';
+            menuContent.appendChild(newSkillsContent);
+        }
+    }
+    
     // Set up event listeners for the start screen
     document.getElementById('start-button').addEventListener('click', () => {
         document.getElementById('start-screen').classList.add('hidden');
@@ -39,7 +52,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add active class to clicked tab and corresponding content
             tab.classList.add('active');
             const contentId = tab.id.replace('tab-', '') + '-content';
-            document.getElementById(contentId).classList.add('active');
+            
+            // Ensure the content element exists
+            let contentElement = document.getElementById(contentId);
+            if (!contentElement && menuContent) {
+                console.log(`Creating missing content element: ${contentId}`);
+                contentElement = document.createElement('div');
+                contentElement.id = contentId;
+                contentElement.className = 'tab-content';
+                menuContent.appendChild(contentElement);
+            }
+            
+            if (contentElement) {
+                contentElement.classList.add('active');
+            }
             
             // Load content based on tab
             if (tab.id === 'tab-inventory') {

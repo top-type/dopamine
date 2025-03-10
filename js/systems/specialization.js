@@ -20,83 +20,285 @@ class SpecializationSystem {
                         type: 'active',
                         cooldown: 15,
                         duration: 5,
-                        level: 1,
+                        level: 1, // Starting level
                         maxLevel: 3,
                         specialization: 'gunner',
                         icon: '🔥',
+                        position: { row: 0, col: 1 }, // Position in skill tree
+                        requiredLevel: 1, // Player level required
+                        prerequisites: [], // No prerequisites for first skill
                         effect: function(game, player) {
-                            // Use the effect from skills.js if available
-                            if (typeof SKILL_EFFECTS !== 'undefined' && SKILL_EFFECTS.RAPID_FIRE) {
-                                SKILL_EFFECTS.RAPID_FIRE(game, player);
-                            } else {
-                                // Fallback implementation
-                                // Temporary fire rate boost
-                                const originalFireRate = player.primaryWeapon.fireRate;
-                                player.primaryWeapon.fireRate *= 1.5;
-                                
-                                // Create visual effect
-                                game.particleSystem.createExplosion(player.x, player.y, '#ff5555', 20, 3, 100);
-                                
-                                // Show message
-                                game.uiSystem.showAlert('Rapid Fire activated!', 1);
-                                
-                                // Reset after duration
-                                setTimeout(() => {
-                                    player.primaryWeapon.fireRate = originalFireRate;
-                                    game.uiSystem.showAlert('Rapid Fire ended', 1);
-                                }, this.duration * 1000);
-                            }
+                            // Temporary fire rate boost
+                            const originalFireRate = player.primaryWeapon.fireRate;
+                            player.primaryWeapon.fireRate *= 1.5;
+                            
+                            // Create visual effect
+                            game.particleSystem.createExplosion(player.x, player.y, '#ff5555', 20, 3, 100);
+                            
+                            // Show message
+                            game.uiSystem.showAlert('Rapid Fire activated!', 1);
+                            
+                            // Reset after duration
+                            setTimeout(() => {
+                                player.primaryWeapon.fireRate = originalFireRate;
+                                game.uiSystem.showAlert('Rapid Fire ended', 1);
+                            }, this.duration * 1000);
                         }
                     },
                     {
-                        id: 'precision_shot',
-                        name: 'Precision Shot',
-                        description: 'Fire a high-damage shot with 100% critical chance',
-                        type: 'active',
-                        cooldown: 20,
-                        level: 1,
+                        id: 'precision_targeting',
+                        name: 'Precision Targeting',
+                        description: 'Increases damage by 15%',
+                        type: 'passive',
+                        level: 0,
                         maxLevel: 3,
                         specialization: 'gunner',
                         icon: '🎯',
-                        effect: function(game, player) {
-                            // Use the effect from skills.js if available
-                            if (typeof SKILL_EFFECTS !== 'undefined' && SKILL_EFFECTS.PRECISION_SHOT) {
-                                SKILL_EFFECTS.PRECISION_SHOT(game, player);
-                            } else {
-                                // Fallback implementation
-                                // Create a high-damage projectile
-                                const projectile = new Projectile(
-                                    game,
-                                    player.x,
-                                    player.y - player.radius,
-                                    player.primaryWeapon.projectileSpeed * 1.5,
-                                    -Math.PI/2, // Straight up
-                                    player.primaryWeapon.damage * 2.5,
-                                    'player',
-                                    '#ff0000'
-                                );
-                                
-                                // Add to game projectiles
-                                game.projectiles.push(projectile);
-                                
-                                // Create visual effect
-                                game.particleSystem.createExplosion(player.x, player.y - player.radius, '#ff0000', 10, 2, 50);
+                        position: { row: 1, col: 0 }, // Position in skill tree
+                        requiredLevel: 3, // Player level required
+                        prerequisites: ['rapid_fire'], // Requires Rapid Fire
+                        effects: [
+                            {
+                                type: 'damage',
+                                value: 0.15 // 15% increase
                             }
+                        ]
+                    },
+                    {
+                        id: 'double_shot',
+                        name: 'Double Shot',
+                        description: 'Chance to fire an additional projectile',
+                        type: 'passive',
+                        level: 0,
+                        maxLevel: 3,
+                        specialization: 'gunner',
+                        icon: '🔫',
+                        position: { row: 1, col: 2 }, // Position in skill tree
+                        requiredLevel: 3, // Player level required
+                        prerequisites: ['rapid_fire'], // Requires Rapid Fire
+                        effects: [
+                            {
+                                type: 'doubleShot',
+                                value: 0.2 // 20% chance
+                            }
+                        ]
+                    },
+                    {
+                        id: 'bullet_storm',
+                        name: 'Bullet Storm',
+                        description: 'Unleash a barrage of bullets in all directions',
+                        type: 'active',
+                        cooldown: 30,
+                        duration: 3,
+                        level: 0,
+                        maxLevel: 3,
+                        specialization: 'gunner',
+                        icon: '☄️',
+                        position: { row: 2, col: 1 }, // Position in skill tree
+                        requiredLevel: 5, // Player level required
+                        prerequisites: ['precision_targeting', 'double_shot'], // Requires both previous skills
+                        effect: function(game, player) {
+                            // Create bullet storm effect
+                            const bulletCount = 16; // Fire 16 bullets in a circle
+                            const angleStep = (Math.PI * 2) / bulletCount;
+                            
+                            for (let i = 0; i < bulletCount; i++) {
+                                const angle = i * angleStep;
+                                const dx = Math.cos(angle);
+                                const dy = Math.sin(angle);
+                                
+                                game.combatSystem.createProjectile(
+                                    player.x, 
+                                    player.y, 
+                                    dx * player.primaryWeapon.projectileSpeed, 
+                                    dy * player.primaryWeapon.projectileSpeed, 
+                                    player.primaryWeapon.damage * 0.7, // Reduced damage for balance
+                                    'player'
+                                );
+                            }
+                            
+                            // Visual effect
+                            game.particleSystem.createExplosion(player.x, player.y, '#ff5555', 30, 4, 150);
+                            
+                            // Show message
+                            game.uiSystem.showAlert('Bullet Storm!', 1);
                         }
                     },
                     {
                         id: 'weapon_mastery',
                         name: 'Weapon Mastery',
-                        description: 'Permanently increases weapon damage by 10%',
+                        description: 'Increases all weapon damage by 25%',
                         type: 'passive',
                         level: 0,
-                        maxLevel: 5,
+                        maxLevel: 1,
                         specialization: 'gunner',
                         icon: '⚔️',
+                        position: { row: 3, col: 1 }, // Position in skill tree
+                        requiredLevel: 8, // Player level required
+                        prerequisites: ['bullet_storm'], // Requires Bullet Storm
                         effects: [
                             {
                                 type: 'damage',
-                                value: 0.1 // 10% increase
+                                value: 0.25 // 25% increase
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'juggernaut',
+                name: 'Juggernaut',
+                description: 'Physical collisions and defensive capabilities. Increased shield durability and ramming damage.',
+                icon: '🛡️',
+                color: '#55ff55',
+                skills: [
+                    {
+                        id: 'shield_surge',
+                        name: 'Shield Surge',
+                        description: 'Temporarily increases shield capacity by 100%',
+                        type: 'active',
+                        cooldown: 30,
+                        duration: 8,
+                        level: 1,
+                        maxLevel: 3,
+                        specialization: 'juggernaut',
+                        icon: '🛡️',
+                        position: { row: 0, col: 1 }, // Position in skill tree
+                        requiredLevel: 1, // Player level required
+                        prerequisites: [], // No prerequisites for first skill
+                        effect: function(game, player) {
+                            // Store original max shield
+                            const originalMaxShield = player.maxShield;
+                            
+                            // Double shield capacity and restore to full
+                            player.maxShield *= 2;
+                            player.shield = player.maxShield;
+                            
+                            // Create visual effect
+                            game.particleSystem.createExplosion(player.x, player.y, '#55ff55', 20, 3, 100);
+                            
+                            // Show message
+                            game.uiSystem.showAlert('Shield Surge activated!', 1);
+                            
+                            // Update UI
+                            if (game.uiSystem && game.uiSystem.updateShieldDisplay) {
+                                game.uiSystem.updateShieldDisplay();
+                            }
+                            
+                            // Reset after duration
+                            setTimeout(() => {
+                                player.maxShield = originalMaxShield;
+                                // Cap current shield at max
+                                if (player.shield > player.maxShield) {
+                                    player.shield = player.maxShield;
+                                }
+                                
+                                // Update UI
+                                if (game.uiSystem && game.uiSystem.updateShieldDisplay) {
+                                    game.uiSystem.updateShieldDisplay();
+                                }
+                                
+                                game.uiSystem.showAlert('Shield Surge ended', 1);
+                            }, this.duration * 1000);
+                        }
+                    },
+                    {
+                        id: 'reinforced_hull',
+                        name: 'Reinforced Hull',
+                        description: 'Increases shield capacity by 20%',
+                        type: 'passive',
+                        level: 0,
+                        maxLevel: 3,
+                        specialization: 'juggernaut',
+                        icon: '🔩',
+                        position: { row: 1, col: 0 }, // Position in skill tree
+                        requiredLevel: 3, // Player level required
+                        prerequisites: ['shield_surge'], // Requires Shield Surge
+                        effects: [
+                            {
+                                type: 'shield',
+                                value: 0.2 // 20% increase
+                            }
+                        ]
+                    },
+                    {
+                        id: 'ramming_speed',
+                        name: 'Ramming Speed',
+                        description: 'Increases collision damage by 50%',
+                        type: 'passive',
+                        level: 0,
+                        maxLevel: 3,
+                        specialization: 'juggernaut',
+                        icon: '💥',
+                        position: { row: 1, col: 2 }, // Position in skill tree
+                        requiredLevel: 3, // Player level required
+                        prerequisites: ['shield_surge'], // Requires Shield Surge
+                        effects: [
+                            {
+                                type: 'collisionDamage',
+                                value: 0.5 // 50% increase
+                            }
+                        ]
+                    },
+                    {
+                        id: 'shield_bash',
+                        name: 'Shield Bash',
+                        description: 'Dash forward, dealing damage to all enemies in your path',
+                        type: 'active',
+                        cooldown: 20,
+                        level: 0,
+                        maxLevel: 3,
+                        specialization: 'juggernaut',
+                        icon: '⚡',
+                        position: { row: 2, col: 1 }, // Position in skill tree
+                        requiredLevel: 5, // Player level required
+                        prerequisites: ['reinforced_hull', 'ramming_speed'], // Requires both previous skills
+                        effect: function(game, player) {
+                            // Store original speed
+                            const originalSpeed = player.baseSpeed;
+                            const originalCollisionDamage = player.collisionDamage;
+                            
+                            // Increase speed and collision damage
+                            player.baseSpeed *= 3;
+                            player.currentSpeed = player.baseSpeed;
+                            player.collisionDamage *= 2;
+                            
+                            // Make player temporarily invulnerable
+                            player.isInvulnerable = true;
+                            
+                            // Create visual effect
+                            game.particleSystem.createExplosion(player.x, player.y, '#55ff55', 20, 3, 100);
+                            
+                            // Show message
+                            game.uiSystem.showAlert('Shield Bash!', 1);
+                            
+                            // Reset after 1 second
+                            setTimeout(() => {
+                                player.baseSpeed = originalSpeed;
+                                player.currentSpeed = player.baseSpeed;
+                                player.collisionDamage = originalCollisionDamage;
+                                player.isInvulnerable = false;
+                                
+                                game.uiSystem.showAlert('Shield Bash ended', 1);
+                            }, 1000);
+                        }
+                    },
+                    {
+                        id: 'impenetrable',
+                        name: 'Impenetrable',
+                        description: 'Increases shield regeneration by 50%',
+                        type: 'passive',
+                        level: 0,
+                        maxLevel: 1,
+                        specialization: 'juggernaut',
+                        icon: '✨',
+                        position: { row: 3, col: 1 }, // Position in skill tree
+                        requiredLevel: 8, // Player level required
+                        prerequisites: ['shield_bash'], // Requires Shield Bash
+                        effects: [
+                            {
+                                type: 'shieldRegen',
+                                value: 0.5 // 50% increase
                             }
                         ]
                     }
@@ -105,7 +307,7 @@ class SpecializationSystem {
             {
                 id: 'chronos',
                 name: 'Chronos',
-                description: 'Time manipulation and movement. Faster ship movement and reduced cooldowns.',
+                description: 'Time manipulation and mobility. Enhanced movement speed and evasion capabilities.',
                 icon: '⏱️',
                 color: '#55aaff',
                 skills: [
@@ -120,6 +322,9 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'chronos',
                         icon: '⚡',
+                        position: { row: 0, col: 1 }, // Position in skill tree
+                        requiredLevel: 1, // Player level required
+                        prerequisites: [], // No prerequisites for first skill
                         effect: function(game, player) {
                             // Temporary speed boost
                             const originalSpeed = player.baseSpeed;
@@ -151,6 +356,9 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'chronos',
                         icon: '🛡️',
+                        position: { row: 1, col: 0 }, // Position in skill tree
+                        requiredLevel: 3, // Player level required
+                        prerequisites: ['time_warp'], // Requires Time Warp
                         effect: function(game, player) {
                             // Make player invulnerable
                             player.isInvulnerable = true;
@@ -185,6 +393,9 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'chronos',
                         icon: '🕒',
+                        position: { row: 1, col: 2 }, // Position in skill tree
+                        requiredLevel: 5, // Player level required
+                        prerequisites: ['time_warp'], // Requires Time Warp
                         effects: [
                             {
                                 type: 'cooldown',
@@ -211,6 +422,9 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'amplifier',
                         icon: '☢️',
+                        position: { row: 2, col: 0 }, // Position in skill tree
+                        requiredLevel: 5, // Player level required
+                        prerequisites: [], // No prerequisites for first skill
                         effect: function(game, player) {
                             // Define cone parameters
                             const coneAngle = Math.PI / 3; // 60 degree cone
@@ -263,6 +477,9 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'amplifier',
                         icon: '☀️',
+                        position: { row: 2, col: 2 }, // Position in skill tree
+                        requiredLevel: 7, // Player level required
+                        prerequisites: ['gamma_burst'], // Requires Gamma Burst
                         effect: function(game, player) {
                             // Create sun bomb at player position
                             const sunBomb = {
@@ -350,170 +567,13 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'amplifier',
                         icon: '⚡',
+                        position: { row: 3, col: 0 }, // Position in skill tree
+                        requiredLevel: 7, // Player level required
+                        prerequisites: ['sun_bomb'], // Requires Sun Bomb
                         effects: [
                             {
                                 type: 'damage',
                                 value: 0.15 // 15% increase
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 'juggernaut',
-                name: 'Juggernaut',
-                description: 'Physical collisions and defensive capabilities. Increased shield durability and ramming damage.',
-                icon: '🛡️',
-                color: '#55ff55',
-                skills: [
-                    {
-                        id: 'shield_surge',
-                        name: 'Shield Surge',
-                        description: 'Temporarily increases shield capacity by 100%',
-                        type: 'active',
-                        cooldown: 30,
-                        duration: 8,
-                        level: 1,
-                        maxLevel: 3,
-                        specialization: 'juggernaut',
-                        icon: '🛡️',
-                        effect: function(game, player) {
-                            // Store original max shield
-                            const originalMaxShield = player.maxShield;
-                            
-                            // Double shield capacity
-                            player.maxShield *= 2;
-                            
-                            // Add shield
-                            player.shield += originalMaxShield;
-                            if (player.shield > player.maxShield) {
-                                player.shield = player.maxShield;
-                            }
-                            
-                            // Create shield effect
-                            game.particleSystem.createExplosion(player.x, player.y, '#55ff55', 30, 5, 150);
-                            
-                            // Show message
-                            game.uiSystem.showAlert('Shield Surge activated!', 1);
-                            
-                            // Reset after duration
-                            setTimeout(() => {
-                                player.maxShield = originalMaxShield;
-                                if (player.shield > player.maxShield) {
-                                    player.shield = player.maxShield;
-                                }
-                                game.uiSystem.showAlert('Shield Surge ended', 1);
-                            }, this.duration * 1000);
-                        }
-                    },
-                    {
-                        id: 'ram_charge',
-                        name: 'Ram Charge',
-                        description: 'Charge forward, dealing heavy damage to enemies in your path',
-                        type: 'active',
-                        cooldown: 15,
-                        level: 1,
-                        maxLevel: 3,
-                        specialization: 'juggernaut',
-                        icon: '🏃',
-                        effect: function(game, player) {
-                            // Charge parameters
-                            const chargeDistance = 300;
-                            const chargeSpeed = 800; // pixels per second
-                            const chargeDamage = player.primaryWeapon.damage * 3;
-                            
-                            // Store original speed
-                            const originalSpeed = player.baseSpeed;
-                            const originalY = player.y;
-                            
-                            // Make player invulnerable during charge
-                            player.isInvulnerable = true;
-                            
-                            // Set charge direction (up)
-                            player.vy = -chargeSpeed;
-                            
-                            // Create charge effect
-                            const createTrail = () => {
-                                if (!game.isRunning || player.y <= originalY - chargeDistance) {
-                                    clearInterval(trailInterval);
-                                    return;
-                                }
-                                
-                                game.particleSystem.createExplosion(player.x, player.y + player.radius, '#55ff55', 5, 2, 30);
-                            };
-                            
-                            // Create trail effect
-                            const trailInterval = setInterval(createTrail, 50);
-                            
-                            // Show message
-                            game.uiSystem.showAlert('Ram Charge!', 1);
-                            
-                            // Check for collisions with enemies
-                            const checkCollisions = () => {
-                                if (!game.isRunning || player.y <= originalY - chargeDistance) {
-                                    clearInterval(collisionInterval);
-                                    
-                                    // End charge
-                                    player.vy = 0;
-                                    player.isInvulnerable = false;
-                                    
-                                    // Create end effect
-                                    game.particleSystem.createExplosion(player.x, player.y, '#55ff55', 20, 4, 100);
-                                    
-                                    return;
-                                }
-                                
-                                // Check for collisions with enemies
-                                game.entities.forEach(entity => {
-                                    if (entity.type === 'enemy') {
-                                        const dx = entity.x - player.x;
-                                        const dy = entity.y - player.y;
-                                        const distance = Math.sqrt(dx * dx + dy * dy);
-                                        
-                                        if (distance <= player.radius + entity.radius) {
-                                            // Damage enemy
-                                            entity.takeDamage(chargeDamage);
-                                            
-                                            // Create hit effect
-                                            game.particleSystem.createExplosion(entity.x, entity.y, '#ff0000', 15, 3, 80);
-                                        }
-                                    }
-                                });
-                            };
-                            
-                            // Check for collisions
-                            const collisionInterval = setInterval(checkCollisions, 50);
-                            
-                            // End charge after distance is covered
-                            setTimeout(() => {
-                                clearInterval(trailInterval);
-                                clearInterval(collisionInterval);
-                                
-                                player.vy = 0;
-                                player.isInvulnerable = false;
-                                
-                                // Create end effect
-                                game.particleSystem.createExplosion(player.x, player.y, '#55ff55', 20, 4, 100);
-                            }, chargeDistance / chargeSpeed * 1000);
-                        }
-                    },
-                    {
-                        id: 'shield_mastery',
-                        name: 'Shield Mastery',
-                        description: 'Increases shield capacity by 20% and collision damage by 50%',
-                        type: 'passive',
-                        level: 0,
-                        maxLevel: 3,
-                        specialization: 'juggernaut',
-                        icon: '🔋',
-                        effects: [
-                            {
-                                type: 'shield',
-                                value: 0.2 // 20% increase
-                            },
-                            {
-                                type: 'collisionDamage',
-                                value: 0.5 // 50% increase
                             }
                         ]
                     }
@@ -537,6 +597,9 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'mothership',
                         icon: '🛸',
+                        position: { row: 0, col: 1 }, // Position in skill tree
+                        requiredLevel: 1, // Player level required
+                        prerequisites: [], // No prerequisites for first skill
                         effect: function(game, player) {
                             // Drone parameters
                             const droneCount = 3;
@@ -660,6 +723,9 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'mothership',
                         icon: '🔰',
+                        position: { row: 1, col: 1 }, // Position in skill tree
+                        requiredLevel: 5, // Player level required
+                        prerequisites: ['attack_drones'], // Requires Attack Drones
                         effect: function(game, player) {
                             // Drone parameters
                             const droneCount = 4;
@@ -748,6 +814,9 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'mothership',
                         icon: '⚙️',
+                        position: { row: 2, col: 1 }, // Position in skill tree
+                        requiredLevel: 7, // Player level required
+                        prerequisites: ['defense_matrix'], // Requires Defense Matrix
                         effects: [
                             {
                                 type: 'droneDamage',
@@ -779,6 +848,9 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'mechanic',
                         icon: '🔧',
+                        position: { row: 0, col: 1 }, // Position in skill tree
+                        requiredLevel: 1, // Player level required
+                        prerequisites: [], // No prerequisites for first skill
                         effect: function(game, player) {
                             // Restore shields
                             player.shield += player.maxShield * 0.5;
@@ -816,6 +888,9 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'mechanic',
                         icon: '⚡',
+                        position: { row: 1, col: 2 }, // Position in skill tree
+                        requiredLevel: 3, // Player level required
+                        prerequisites: ['emergency_repair'], // Requires Emergency Repair
                         effect: function(game, player) {
                             // Store original values
                             const originalDamage = player.primaryWeapon.damage;
@@ -856,6 +931,9 @@ class SpecializationSystem {
                         maxLevel: 3,
                         specialization: 'mechanic',
                         icon: '🔋',
+                        position: { row: 2, col: 2 }, // Position in skill tree
+                        requiredLevel: 5, // Player level required
+                        prerequisites: ['overclock'], // Requires Overclock
                         effects: [
                             {
                                 type: 'shieldRegen',
@@ -871,6 +949,8 @@ class SpecializationSystem {
         this.maxSelections = 2;
         this.specializationUnlockLevels = [2, 10]; // First at level 2, second at level 10
         this.pendingSpecializationUnlock = false;
+        
+        console.log('SpecializationSystem initialized with unlock levels:', this.specializationUnlockLevels);
     }
     
     /**
@@ -889,12 +969,19 @@ class SpecializationSystem {
             this.game.selectedSpecializations = [];
         }
         
+        // Check if specializationUnlockLevels is defined
+        if (!this.specializationUnlockLevels) {
+            console.error('specializationUnlockLevels is not defined, initializing it');
+            this.specializationUnlockLevels = [2, 10]; // First at level 2, second at level 10
+        }
+        
         const currentSpecCount = this.game.selectedSpecializations.length;
         console.log(`Current specialization count: ${currentSpecCount}`);
         console.log(`Unlock levels: ${this.specializationUnlockLevels}`);
         
         // Check if we have fewer specializations than allowed and if the current level meets the requirement
         if (currentSpecCount < this.maxSelections && 
+            this.specializationUnlockLevels && 
             currentLevel >= this.specializationUnlockLevels[currentSpecCount]) {
             console.log('Specialization can be unlocked!');
             this.pendingSpecializationUnlock = true;
@@ -919,6 +1006,21 @@ class SpecializationSystem {
         const container = document.getElementById('skills-content');
         if (!container) {
             console.error('Skills content container not found');
+            
+            // Try to find the container in the menu-content
+            const menuContent = document.getElementById('menu-content');
+            if (menuContent) {
+                console.log('Found menu-content, creating skills-content');
+                const skillsContent = document.createElement('div');
+                skillsContent.id = 'skills-content';
+                skillsContent.className = 'tab-content';
+                menuContent.appendChild(skillsContent);
+                
+                // Try again with the newly created container
+                this.showSpecializationSelection();
+                return;
+            }
+            
             return;
         }
         
@@ -1103,28 +1205,14 @@ class SpecializationSystem {
                 console.log(`Adding specialization ${newSpecId} to game's selected specializations`);
                 this.game.selectedSpecializations.push(newSpecId);
                 
-                // Apply the specialization
+                // Get the specialization
                 const spec = this.getSpecializationById(newSpecId);
                 if (spec) {
-                    console.log(`Applying specialization: ${spec.name}`);
-                    
-                    // Apply level 1 active skills
-                    spec.skills.forEach(skill => {
-                        if (skill.level > 0) {
-                            console.log(`Adding skill: ${skill.name}`);
-                            this.game.player.addSkill(skill);
-                        }
-                    });
-                    
-                    // Update UI
-                    if (this.game.uiSystem && this.game.uiSystem.updateSkillIcons) {
-                        console.log('Updating skill icons');
-                        this.game.uiSystem.updateSkillIcons();
-                    }
+                    console.log(`Specialization unlocked: ${spec.name}`);
                     
                     // Show confirmation message
                     console.log('Showing confirmation message');
-                    this.game.uiSystem.showAlert(`Specialization unlocked: ${spec.name}`, 3);
+                    this.game.uiSystem.showAlert(`Specialization unlocked: ${spec.name}. Use skill points to unlock skills.`, 3);
                 }
                 
                 // Reset the pending flag
@@ -1137,22 +1225,6 @@ class SpecializationSystem {
             // Original behavior for game start
             console.log('Handling game start specialization selection');
             this.game.selectedSpecializations = this.selectedSpecializations;
-            
-            // Apply initial skills
-            this.selectedSpecializations.forEach(specId => {
-                const spec = this.getSpecializationById(specId);
-                if (spec) {
-                    console.log(`Applying specialization: ${spec.name}`);
-                    
-                    // Apply level 1 active skills
-                    spec.skills.forEach(skill => {
-                        if (skill.level > 0) {
-                            console.log(`Adding skill: ${skill.name}`);
-                            this.game.player.addSkill(skill);
-                        }
-                    });
-                }
-            });
         }
     }
     
@@ -1204,29 +1276,99 @@ class SpecializationSystem {
      * @returns {boolean} Whether the upgrade was successful
      */
     upgradeSkill(specId, skillId) {
-        const skill = this.getSkillById(specId, skillId);
-        if (!skill) return false;
+        console.log(`Attempting to upgrade skill ${skillId} in specialization ${specId}`);
         
-        if (skill.level < skill.maxLevel && this.game.skillPoints > 0) {
-            skill.level++;
-            this.game.skillPoints--;
-            
-            // If it's a passive skill being upgraded from 0, apply it
-            if (skill.passive && skill.level === 1) {
-                skill.effect(this.game.player);
-            }
-            
-            // Update the player's skills
-            if (skill.level === 1) {
-                this.game.player.addSkill(skill);
-            } else {
-                this.game.player.updateSkill(skill);
-            }
-            
-            return true;
+        const skill = this.getSkillById(specId, skillId);
+        if (!skill) {
+            console.error(`Skill ${skillId} not found in specialization ${specId}`);
+            return false;
         }
         
-        return false;
+        // Check if skill is available
+        if (!this.isSkillAvailable(specId, skillId)) {
+            console.error(`Skill ${skill.name} is not available for upgrade`);
+            return false;
+        }
+        
+        // Check if skill is already at max level
+        if (skill.level >= skill.maxLevel) {
+            console.error(`Skill ${skill.name} is already at max level`);
+            return false;
+        }
+        
+        // Check if player has enough skill points
+        if (this.game.skillPoints <= 0) {
+            console.error('Not enough skill points');
+            return false;
+        }
+        
+        // Upgrade the skill
+        skill.level++;
+        this.game.skillPoints--;
+        
+        console.log(`Upgraded skill ${skill.name} to level ${skill.level}`);
+        
+        // If this is the first level, add the skill to the player
+        if (skill.level === 1) {
+            console.log(`Adding skill ${skill.name} to player`);
+            this.game.player.addSkill(skill);
+        } else {
+            console.log(`Updating skill ${skill.name} for player`);
+            this.game.player.updateSkill(skill);
+        }
+        
+        // Update UI
+        if (this.game.uiSystem && this.game.uiSystem.updateStatsDisplay) {
+            this.game.uiSystem.updateStatsDisplay();
+        }
+        
+        // Update skill icons if it's an active skill
+        if (skill.type === 'active' && this.game.uiSystem && this.game.uiSystem.updateSkillIcons) {
+            this.game.uiSystem.updateSkillIcons();
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Check if a skill is available to be upgraded
+     * @param {string} specId - Specialization ID
+     * @param {string} skillId - Skill ID
+     * @returns {boolean} Whether the skill is available
+     */
+    isSkillAvailable(specId, skillId) {
+        console.log(`Checking if skill ${skillId} is available in specialization ${specId}`);
+        
+        const skill = this.getSkillById(specId, skillId);
+        if (!skill) {
+            console.error(`Skill ${skillId} not found in specialization ${specId}`);
+            return false;
+        }
+        
+        // Check player level requirement
+        if (this.game.level < skill.requiredLevel) {
+            console.log(`Player level ${this.game.level} is below required level ${skill.requiredLevel}`);
+            return false;
+        }
+        
+        // Check prerequisites
+        if (skill.prerequisites && skill.prerequisites.length > 0) {
+            for (const prereqId of skill.prerequisites) {
+                const prereqSkill = this.getSkillById(specId, prereqId);
+                if (!prereqSkill) {
+                    console.error(`Prerequisite skill ${prereqId} not found`);
+                    return false;
+                }
+                
+                if (prereqSkill.level === 0) {
+                    console.log(`Prerequisite skill ${prereqSkill.name} is not unlocked`);
+                    return false;
+                }
+            }
+        }
+        
+        console.log(`Skill ${skill.name} is available`);
+        return true;
     }
     
     /**
@@ -1236,11 +1378,13 @@ class SpecializationSystem {
     renderSkillTree(container) {
         console.log('Rendering skill tree...');
         
+        // Validate container
         if (!container) {
             console.error('Skill tree container is null or undefined');
             return;
         }
         
+        // Clear container
         container.innerHTML = '';
         
         // Make sure game.selectedSpecializations is initialized
@@ -1249,7 +1393,14 @@ class SpecializationSystem {
             this.game.selectedSpecializations = [];
         }
         
+        // Make sure specializationUnlockLevels is initialized
+        if (!this.specializationUnlockLevels) {
+            console.log('Initializing specializationUnlockLevels');
+            this.specializationUnlockLevels = [2, 10]; // First at level 2, second at level 10
+        }
+        
         console.log('Selected specializations:', this.game.selectedSpecializations);
+        console.log('Current player level:', this.game.level);
         
         // If no specializations are selected yet, show a message
         if (this.game.selectedSpecializations.length === 0) {
@@ -1286,10 +1437,9 @@ class SpecializationSystem {
             return;
         }
         
-        // Render existing specializations
-        console.log('Rendering specializations:', this.game.selectedSpecializations);
-        
+        // Render each specialization
         this.game.selectedSpecializations.forEach(specId => {
+            // Get the specialization
             const spec = this.getSpecializationById(specId);
             if (!spec) {
                 console.error(`Specialization with ID ${specId} not found`);
@@ -1298,66 +1448,265 @@ class SpecializationSystem {
             
             console.log(`Rendering specialization: ${spec.name}`);
             
+            // Create specialization element
             const specElement = document.createElement('div');
             specElement.className = 'skill-tree';
             specElement.style.borderColor = spec.color;
             
-            specElement.innerHTML = `
-                <div class="skill-tree-header" style="background-color: ${spec.color}">
-                    <div class="spec-icon">${spec.icon}</div>
-                    <h3>${spec.name}</h3>
-                </div>
-                <div class="skill-tree-skills"></div>
+            // Create header
+            const headerElement = document.createElement('div');
+            headerElement.className = 'skill-tree-header';
+            headerElement.style.backgroundColor = spec.color;
+            headerElement.innerHTML = `
+                <div class="spec-icon">${spec.icon}</div>
+                <h3>${spec.name}</h3>
             `;
+            specElement.appendChild(headerElement);
             
-            const skillsContainer = specElement.querySelector('.skill-tree-skills');
+            // Create content container
+            const contentElement = document.createElement('div');
+            contentElement.className = 'skill-tree-content';
+            specElement.appendChild(contentElement);
             
+            // Create grid
+            const gridElement = document.createElement('div');
+            gridElement.className = 'skill-tree-grid';
+            contentElement.appendChild(gridElement);
+            
+            // Set up grid dimensions
+            const gridSize = 4; // 4x4 grid
+            gridElement.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+            gridElement.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            
+            // Create a 2D array to hold skills
+            const skillGrid = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+            
+            // Place skills in the grid
             spec.skills.forEach(skill => {
-                console.log(`Rendering skill: ${skill.name} (Level ${skill.level}/${skill.maxLevel})`);
-                
-                const skillElement = document.createElement('div');
-                skillElement.className = 'skill';
-                skillElement.classList.add(skill.level > 0 ? 'unlocked' : 'locked');
-                if (skill.passive) skillElement.classList.add('passive');
-                
-                skillElement.innerHTML = `
-                    <div class="skill-header">
-                        <h4>${skill.name}</h4>
-                        <div class="skill-level">Level ${skill.level}/${skill.maxLevel}</div>
-                    </div>
-                    <p>${skill.description}</p>
-                    <div class="skill-details">
-                        ${skill.passive ? '<span class="passive-tag">Passive</span>' : ''}
-                        ${!skill.passive ? `<span class="cooldown">Cooldown: ${skill.cooldown}s</span>` : ''}
-                        ${skill.duration ? `<span class="duration">Duration: ${skill.duration}s</span>` : ''}
-                    </div>
-                    <button class="upgrade-skill" ${skill.level >= skill.maxLevel || this.game.skillPoints <= 0 ? 'disabled' : ''}>
-                        Upgrade (1 SP)
-                    </button>
-                `;
-                
-                const upgradeButton = skillElement.querySelector('.upgrade-skill');
-                upgradeButton.addEventListener('click', () => {
-                    if (this.upgradeSkill(specId, skill.id)) {
-                        // Update UI
-                        skillElement.classList.add('unlocked');
-                        skillElement.classList.remove('locked');
-                        skillElement.querySelector('.skill-level').textContent = `Level ${skill.level}/${skill.maxLevel}`;
-                        
-                        if (skill.level >= skill.maxLevel || this.game.skillPoints <= 0) {
-                            upgradeButton.disabled = true;
-                        }
-                        
-                        // Update skill points display
-                        document.getElementById('skill-points').textContent = this.game.skillPoints;
+                if (skill.position) {
+                    const { row, col } = skill.position;
+                    if (row >= 0 && row < gridSize && col >= 0 && col < gridSize) {
+                        skillGrid[row][col] = skill;
+                    } else {
+                        console.error(`Skill ${skill.name} has invalid position: [${row}, ${col}]`);
                     }
-                });
-                
-                skillsContainer.appendChild(skillElement);
+                } else {
+                    console.error(`Skill ${skill.name} does not have a position property`);
+                }
             });
             
+            // Render grid cells
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    const skill = skillGrid[row][col];
+                    
+                    // If no skill in this cell, create an empty cell
+                    if (!skill) {
+                        const emptyCell = document.createElement('div');
+                        emptyCell.className = 'skill-cell empty';
+                        emptyCell.style.gridRow = row + 1;
+                        emptyCell.style.gridColumn = col + 1;
+                        gridElement.appendChild(emptyCell);
+                        continue;
+                    }
+                    
+                    console.log(`Rendering skill at position [${row},${col}]: ${skill.name} (Level: ${skill.level})`);
+                    
+                    // Check if skill is available
+                    const isAvailable = this.isSkillAvailable(spec.id, skill.id);
+                    const isUnlocked = skill.level > 0;
+                    
+                    // Create skill node
+                    const skillNode = document.createElement('div');
+                    skillNode.className = 'skill-node';
+                    skillNode.classList.add(isUnlocked ? 'unlocked' : (isAvailable ? 'available' : 'locked'));
+                    if (skill.type === 'passive') skillNode.classList.add('passive');
+                    
+                    skillNode.style.gridRow = row + 1;
+                    skillNode.style.gridColumn = col + 1;
+                    
+                    skillNode.innerHTML = `
+                        <div class="skill-icon">${skill.icon}</div>
+                        <div class="skill-info">
+                            <h4>${skill.name}</h4>
+                            <div class="skill-level">Level ${skill.level}/${skill.maxLevel}</div>
+                        </div>
+                    `;
+                    
+                    // Add click event to show skill details
+                    skillNode.addEventListener('click', () => {
+                        this.showSkillDetails(spec.id, skill.id, gridElement);
+                    });
+                    
+                    gridElement.appendChild(skillNode);
+                    
+                    // Create connections to prerequisites
+                    if (skill.prerequisites && skill.prerequisites.length > 0) {
+                        skill.prerequisites.forEach(prereqId => {
+                            // Find the prerequisite skill
+                            const prereqSkill = spec.skills.find(s => s.id === prereqId);
+                            if (!prereqSkill || !prereqSkill.position) return;
+                            
+                            const prereqPos = prereqSkill.position;
+                            
+                            // Skip if prereq is out of bounds
+                            if (prereqPos.row < 0 || prereqPos.row >= gridSize || 
+                                prereqPos.col < 0 || prereqPos.col >= gridSize) {
+                                return;
+                            }
+                            
+                            // Create connection element
+                            const connection = document.createElement('div');
+                            connection.className = 'skill-connection';
+                            
+                            if (isUnlocked || (prereqSkill.level > 0 && isAvailable)) {
+                                connection.classList.add('unlocked');
+                            }
+                            
+                            // Determine connection direction and position
+                            if (prereqPos.row === row) {
+                                // Horizontal connection
+                                connection.classList.add('horizontal');
+                                connection.style.gridRow = row + 1;
+                                connection.style.gridColumn = `${Math.min(prereqPos.col, col) + 1} / ${Math.max(prereqPos.col, col) + 1}`;
+                            } else if (prereqPos.col === col) {
+                                // Vertical connection
+                                connection.classList.add('vertical');
+                                connection.style.gridColumn = col + 1;
+                                connection.style.gridRow = `${Math.min(prereqPos.row, row) + 1} / ${Math.max(prereqPos.row, row) + 1}`;
+                            } else {
+                                // Diagonal connection (not implemented for simplicity)
+                                return;
+                            }
+                            
+                            gridElement.appendChild(connection);
+                        });
+                    }
+                }
+            }
+            
+            // Add the specialization element to the container
             container.appendChild(specElement);
         });
+    }
+    
+    /**
+     * Show skill details and upgrade options
+     * @param {string} specId - Specialization ID
+     * @param {string} skillId - Skill ID
+     * @param {HTMLElement} container - The container element
+     */
+    showSkillDetails(specId, skillId, container) {
+        console.log(`Showing skill details for ${skillId} in specialization ${specId}`);
+        
+        const skill = this.getSkillById(specId, skillId);
+        if (!skill) {
+            console.error(`Skill ${skillId} not found in specialization ${specId}`);
+            return;
+        }
+        
+        console.log(`Skill details: ${JSON.stringify(skill)}`);
+        
+        // Check if details panel already exists and remove it
+        const existingPanel = document.querySelector('.skill-details-panel');
+        if (existingPanel) {
+            existingPanel.remove();
+        }
+        
+        // Create details panel
+        const detailsPanel = document.createElement('div');
+        detailsPanel.className = 'skill-details-panel';
+        
+        // Check if skill is available
+        const isAvailable = this.isSkillAvailable(specId, skillId);
+        const isUnlocked = skill.level > 0;
+        const canUpgrade = isAvailable && skill.level < skill.maxLevel && this.game.skillPoints > 0;
+        
+        console.log(`Skill status: available=${isAvailable}, unlocked=${isUnlocked}, canUpgrade=${canUpgrade}`);
+        
+        // Show appropriate message based on skill status
+        let statusMessage = '';
+        if (!isAvailable) {
+            statusMessage = '<div class="status-message locked">Locked</div>';
+            
+            // Show requirements
+            statusMessage += '<div class="requirements">';
+            
+            // Level requirement
+            statusMessage += `<div class="requirement ${this.game.level >= skill.requiredLevel ? 'met' : 'not-met'}">
+                Player Level ${skill.requiredLevel}
+            </div>`;
+            
+            // Prerequisite skills
+            if (skill.prerequisites && skill.prerequisites.length > 0) {
+                skill.prerequisites.forEach(prereqId => {
+                    const prereqSkill = this.getSkillById(specId, prereqId);
+                    if (prereqSkill) {
+                        statusMessage += `<div class="requirement ${prereqSkill.level > 0 ? 'met' : 'not-met'}">
+                            ${prereqSkill.name}
+                        </div>`;
+                    }
+                });
+            }
+            
+            statusMessage += '</div>';
+        } else if (skill.level === skill.maxLevel) {
+            statusMessage = '<div class="status-message maxed">Maximized</div>';
+        } else if (this.game.skillPoints <= 0) {
+            statusMessage = '<div class="status-message no-points">No Skill Points</div>';
+        } else {
+            statusMessage = '<div class="status-message available">Available</div>';
+        }
+        
+        detailsPanel.innerHTML = `
+            <div class="skill-details-header">
+                <h3>${skill.name}</h3>
+                <div class="skill-level">Level ${skill.level}/${skill.maxLevel}</div>
+                <button class="close-details">×</button>
+            </div>
+            <div class="skill-details-content">
+                <div class="skill-icon large">${skill.icon}</div>
+                <p class="skill-description">${skill.description}</p>
+                <div class="skill-attributes">
+                    ${skill.type === 'active' ? `<div class="attribute">Type: Active</div>` : `<div class="attribute">Type: Passive</div>`}
+                    ${skill.cooldown ? `<div class="attribute">Cooldown: ${skill.cooldown}s</div>` : ''}
+                    ${skill.duration ? `<div class="attribute">Duration: ${skill.duration}s</div>` : ''}
+                </div>
+                ${statusMessage}
+                ${canUpgrade ? `<button class="upgrade-skill-button">Upgrade (1 SP)</button>` : ''}
+            </div>
+        `;
+        
+        // Add to container
+        container.appendChild(detailsPanel);
+        
+        // Add event listeners
+        const closeButton = detailsPanel.querySelector('.close-details');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                detailsPanel.remove();
+            });
+        }
+        
+        const upgradeButton = detailsPanel.querySelector('.upgrade-skill-button');
+        if (upgradeButton) {
+            upgradeButton.addEventListener('click', () => {
+                console.log(`Upgrading skill ${skill.name}`);
+                if (this.upgradeSkill(specId, skillId)) {
+                    console.log(`Successfully upgraded skill ${skill.name} to level ${skill.level}`);
+                    
+                    // Refresh the skill tree
+                    const skillTreeContainer = document.getElementById('skill-trees-container');
+                    if (skillTreeContainer) {
+                        this.renderSkillTree(skillTreeContainer);
+                    } else {
+                        console.error('Skill trees container not found for refresh');
+                    }
+                } else {
+                    console.error(`Failed to upgrade skill ${skill.name}`);
+                }
+            });
+        }
     }
     
     /**
