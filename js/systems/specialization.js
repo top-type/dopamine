@@ -16,10 +16,10 @@ class SpecializationSystem {
                     {
                         id: 'rapid_fire',
                         name: 'Rapid Fire',
-                        description: 'Temporarily increases fire rate by 150%',
+                        description: `Temporarily increases fire rate by ${(SKILL_CONFIG.RAPID_FIRE.multiplier - 1) * 100}%`,
                         type: 'active',
-                        cooldown: 10,
-                        duration: 8,
+                        cooldown: SKILL_CONFIG.RAPID_FIRE.cooldown,
+                        duration: SKILL_CONFIG.RAPID_FIRE.duration,
                         level: 1, // Starting level
                         maxLevel: 3,
                         specialization: 'gunner',
@@ -27,47 +27,7 @@ class SpecializationSystem {
                         position: { row: 0, col: 1 }, // Position in skill tree
                         requiredLevel: 1, // Player level required
                         prerequisites: [], // No prerequisites for first skill
-                        effect: function(game, player) {
-                            // Store the original fire rate
-                            const originalFireRate = player.primaryWeapon.fireRate;
-                            
-                            // Calculate new fire rate (150% increase)
-                            const newFireRate = originalFireRate * 2.5;
-                            
-                            // Apply the new fire rate
-                            player.primaryWeapon.fireRate = newFireRate;
-                            
-                            // Create visual effect
-                            game.particleSystem.createExplosion(player.x, player.y, '#ff5555', 20, 3, 100);
-                            
-                            // Show message
-                            game.uiSystem.showAlert('Rapid Fire activated!', 1);
-                            
-                            // Log the change
-                            console.log(`Rapid Fire activated! Fire rate increased from ${originalFireRate.toFixed(2)} to ${newFireRate.toFixed(2)}`);
-                            
-                            // Store the duration value from the skill (important to capture it in this scope)
-                            const duration = this.duration || 5; // Default to 5 seconds if duration is undefined
-                            
-                            // Reset after duration
-                            const timerId = setTimeout(() => {
-                                // Reset fire rate to original value
-                                player.primaryWeapon.fireRate = originalFireRate;
-                                
-                                // Show message
-                                game.uiSystem.showAlert('Rapid Fire ended', 1);
-                                
-                                // Log the reset
-                                console.log(`Rapid Fire ended. Fire rate reset to ${originalFireRate.toFixed(2)}`);
-                            }, duration * 1000);
-                            
-                            // Store the timer ID on the player to allow for cancellation if needed
-                            player.activeEffects = player.activeEffects || {};
-                            player.activeEffects.rapidFire = {
-                                timerId: timerId,
-                                endTime: game.gameTime + duration
-                            };
-                        }
+                        effect: SKILL_EFFECTS.RAPID_FIRE
                     },
                     {
                         id: 'precision_targeting',

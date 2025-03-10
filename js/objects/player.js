@@ -322,42 +322,8 @@ class Player extends Entity {
                     break;
                     
                 case 'rapid fire':
-                    // Store the original fire rate
-                    const originalFireRate = this.primaryWeapon.fireRate;
-                    
-                    // Calculate new fire rate (150% increase)
-                    const newFireRate = originalFireRate * 2.5;
-                    
-                    // Apply the new fire rate
-                    this.primaryWeapon.fireRate = newFireRate;
-                    
-                    // Create visual effect
-                    this.game.particleSystem.createExplosion(this.x, this.y, '#ff5555', 20, 3, 100);
-                    
-                    // Show message
-                    this.game.uiSystem.showAlert('Rapid Fire activated!', 1);
-                    
-                    // Log the change
-                    console.log(`Rapid Fire activated! Fire rate increased from ${originalFireRate.toFixed(2)} to ${newFireRate.toFixed(2)}`);
-                    
-                    // Reset after 8 seconds
-                    const timerId = setTimeout(() => {
-                        // Reset fire rate to original value
-                        this.primaryWeapon.fireRate = originalFireRate;
-                        
-                        // Show message
-                        this.game.uiSystem.showAlert('Rapid Fire ended', 1);
-                        
-                        // Log the reset
-                        console.log(`Rapid Fire ended. Fire rate reset to ${originalFireRate.toFixed(2)}`);
-                    }, 8000);
-                    
-                    // Store the timer ID to allow for cancellation if needed
-                    this.activeEffects = this.activeEffects || {};
-                    this.activeEffects.rapidFire = {
-                        timerId: timerId,
-                        endTime: this.game.gameTime + 8
-                    };
+                    // Use the centralized skill effect
+                    SKILL_EFFECTS.RAPID_FIRE(this.game, this);
                     break;
                     
                 case 'bomb':
@@ -696,17 +662,100 @@ class Player extends Entity {
      */
     cleanupActiveEffects() {
         if (this.activeEffects) {
-            // Clear any active timers
-            if (this.activeEffects.rapidFire && this.activeEffects.rapidFire.timerId) {
-                clearTimeout(this.activeEffects.rapidFire.timerId);
-                console.log('Cleared Rapid Fire effect timer');
+            // Clear all active effect timers and restore original values
+            for (const effectName in this.activeEffects) {
+                const effect = this.activeEffects[effectName];
+                
+                // Clear the timer
+                if (effect.timerId) {
+                    clearTimeout(effect.timerId);
+                    console.log(`Cleared ${effectName} effect timer`);
+                }
+                
+                // Restore the original value if we have the stat path and original value
+                if (effect.statName && effect.originalValue !== undefined) {
+                    const statPath = effect.statName.split('.');
+                    let statObject = this;
+                    
+                    // Navigate to the nested property
+                    for (let i = 0; i < statPath.length - 1; i++) {
+                        statObject = statObject[statPath[i]];
+                    }
+                    
+                    // Restore the original value
+                    statObject[statPath[statPath.length - 1]] = effect.originalValue;
+                    console.log(`Restored ${effect.statName} to original value: ${effect.originalValue}`);
+                }
             }
-            
-            // Reset any modified stats
-            this.primaryWeapon.fireRate = 5; // Reset to default fire rate
             
             // Clear the effects object
             this.activeEffects = {};
         }
+    }
+    
+    /**
+     * Apply a temporary effect to the player
+     * @param {string} effectName - Name of the effect
+     * @param {string} statName - Name of the stat to modify
+     * @param {number} multiplier - Multiplier to apply to the stat
+     * @param {number} duration - Duration of the effect in seconds
+     * @param {string} color - Color for the visual effect
+     */
+    applyTemporaryEffect(effectName, statName, multiplier, duration, color = '#ff5555') {
+        // Get the current stat value
+        let originalValue;
+        let statPath = statName.split('.');
+        let statObject = this;
+        
+        // Navigate to the nested property
+        for (let i = 0; i < statPath.length - 1; i++) {
+            statObject = statObject[statPath[i]];
+        }
+        
+        // Get the original value
+        originalValue = statObject[statPath[statPath.length - 1]];
+        
+        // Calculate new value
+        const newValue = originalValue * multiplier;
+        
+        // Apply the new value
+        statObject[statPath[statPath.length - 1]] = newValue;
+        
+        // Create visual effect
+        this.game.particleSystem.createExplosion(this.x, this.y, color, 20, 3, 100);
+        
+        // Show message
+        this.game.uiSystem.showAlert(`${effectName} activated!`, 1);
+        
+        // Log the change
+        console.log(`${effectName} activated! ${statName} increased from ${originalValue.toFixed(2)} to ${newValue.toFixed(2)}`);
+        
+        // Reset after duration
+        const timerId = setTimeout(() => {
+            // Reset stat to original value
+            statObject[statPath[statPath.length - 1]] = originalValue;
+            
+            // Show message
+            this.game.uiSystem.showAlert(`${effectName} ended`, 1);
+            
+            // Log the reset
+            console.log(`${effectName} ended. ${statName} reset to ${originalValue.toFixed(2)}`);
+            
+            // Remove from active effects
+            if (this.activeEffects && this.activeEffects[effectName.toLowerCase().replace(/\s+/g, '_')]) {
+                delete this.activeEffects[effectName.toLowerCase().replace(/\s+/g, '_')];
+            }
+        }, duration * 1000);
+        
+        // Store the timer ID to allow for cancellation if needed
+        this.activeEffects = this.activeEffects || {};
+        this.activeEffects[effectName.toLowerCase().replace(/\s+/g, '_')] = {
+            timerId: timerId,
+            endTime: this.game.gameTime + duration,
+            statName: statName,
+            originalValue: originalValue
+        };
+        
+        return timerId;
     }
 } 

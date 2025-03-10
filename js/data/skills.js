@@ -3,46 +3,28 @@
  * This file contains default skill data that can be used by the specialization system
  */
 
+// Skill configuration - Single source of truth for all skill parameters
+const SKILL_CONFIG = {
+    RAPID_FIRE: {
+        multiplier: 2.5,     // Fire rate multiplier (2.5 = 150% increase)
+        duration: 8,         // Effect duration in seconds
+        cooldown: 10         // Cooldown in seconds
+    },
+    // Add other skills here as needed
+};
+
 // Skill effect functions
 const SKILL_EFFECTS = {
     // Gunner specialization effects
     RAPID_FIRE: function(game, player) {
-        // Store the original fire rate
-        const originalFireRate = player.primaryWeapon.fireRate;
-        
-        // Calculate new fire rate (150% increase)
-        const newFireRate = originalFireRate * 2.5;
-        
-        // Apply the new fire rate
-        player.primaryWeapon.fireRate = newFireRate;
-        
-        // Create visual effect
-        game.particleSystem.createExplosion(player.x, player.y, '#ff5555', 20, 3, 100);
-        
-        // Show message
-        game.uiSystem.showAlert('Rapid Fire activated!', 1);
-        
-        // Log the change
-        console.log(`Rapid Fire activated! Fire rate increased from ${originalFireRate.toFixed(2)} to ${newFireRate.toFixed(2)}`);
-        
-        // Reset after 8 seconds
-        const timerId = setTimeout(() => {
-            // Reset fire rate to original value
-            player.primaryWeapon.fireRate = originalFireRate;
-            
-            // Show message
-            game.uiSystem.showAlert('Rapid Fire ended', 1);
-            
-            // Log the reset
-            console.log(`Rapid Fire ended. Fire rate reset to ${originalFireRate.toFixed(2)}`);
-        }, 8000);
-        
-        // Store the timer ID to allow for cancellation if needed
-        player.activeEffects = player.activeEffects || {};
-        player.activeEffects.rapidFire = {
-            timerId: timerId,
-            endTime: game.gameTime + 8
-        };
+        // Use the helper method to apply the temporary effect
+        player.applyTemporaryEffect(
+            'Rapid Fire',                      // Effect name
+            'primaryWeapon.fireRate',          // Stat to modify
+            SKILL_CONFIG.RAPID_FIRE.multiplier, // Multiplier
+            SKILL_CONFIG.RAPID_FIRE.duration,   // Duration
+            '#ff5555'                          // Effect color
+        );
     },
     
     PRECISION_SHOT: function(game, player) {
@@ -203,7 +185,55 @@ const SKILL_EFFECTS = {
     }
 };
 
-// Export the skill effects
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { SKILL_EFFECTS };
+/**
+ * Helper function to register a new temporary stat boost skill
+ * @param {string} skillId - Unique ID for the skill (e.g., 'RAPID_FIRE')
+ * @param {string} statPath - Path to the stat to modify (e.g., 'primaryWeapon.fireRate')
+ * @param {number} multiplier - Multiplier to apply to the stat
+ * @param {number} duration - Duration of the effect in seconds
+ * @param {number} cooldown - Cooldown of the skill in seconds
+ * @param {string} color - Color for the visual effect
+ */
+function registerTemporaryStatBoostSkill(skillId, statPath, multiplier, duration, cooldown, color = '#ff5555') {
+    // Add to skill config
+    SKILL_CONFIG[skillId] = {
+        multiplier: multiplier,
+        duration: duration,
+        cooldown: cooldown
+    };
+    
+    // Create the effect function
+    SKILL_EFFECTS[skillId] = function(game, player) {
+        player.applyTemporaryEffect(
+            skillId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), // Convert ID to readable name
+            statPath,
+            multiplier,
+            duration,
+            color
+        );
+    };
+    
+    console.log(`Registered skill: ${skillId} (${statPath} x${multiplier} for ${duration}s, cooldown: ${cooldown}s)`);
+}
+
+// Example of registering a new skill using the helper function
+// Uncomment and modify as needed:
+/*
+registerTemporaryStatBoostSkill(
+    'SPEED_BOOST',           // Skill ID
+    'baseSpeed',             // Stat to modify
+    2.0,                     // Multiplier (2x speed)
+    5,                       // Duration (5 seconds)
+    20,                      // Cooldown (20 seconds)
+    '#00ffff'                // Effect color (cyan)
+);
+*/
+
+// Export the skill configuration and effects
+if (typeof module !== 'undefined') {
+    module.exports = {
+        SKILL_CONFIG,
+        SKILL_EFFECTS,
+        registerTemporaryStatBoostSkill
+    };
 } 

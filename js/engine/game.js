@@ -1,4 +1,20 @@
 /**
+ * Game - Main game engine
+ * Manages the game loop, entities, and game state
+ */
+
+// Import skill configuration and effects if not already available in global scope
+if (typeof SKILL_CONFIG === 'undefined' || typeof SKILL_EFFECTS === 'undefined') {
+    try {
+        const skillModule = require('../data/skills.js');
+        window.SKILL_CONFIG = skillModule.SKILL_CONFIG;
+        window.SKILL_EFFECTS = skillModule.SKILL_EFFECTS;
+    } catch (e) {
+        console.error('Failed to import skill configuration:', e);
+    }
+}
+
+/**
  * Game - Core game engine class
  * Manages the game loop, state, and coordinates all game systems
  */
