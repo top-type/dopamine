@@ -7,9 +7,14 @@
 const SKILL_EFFECTS = {
     // Gunner specialization effects
     RAPID_FIRE: function(game, player) {
-        // Temporary fire rate boost
+        // Store the original fire rate
         const originalFireRate = player.primaryWeapon.fireRate;
-        player.primaryWeapon.fireRate *= 1.5;
+        
+        // Calculate new fire rate (150% increase)
+        const newFireRate = originalFireRate * 2.5;
+        
+        // Apply the new fire rate
+        player.primaryWeapon.fireRate = newFireRate;
         
         // Create visual effect
         game.particleSystem.createExplosion(player.x, player.y, '#ff5555', 20, 3, 100);
@@ -17,11 +22,27 @@ const SKILL_EFFECTS = {
         // Show message
         game.uiSystem.showAlert('Rapid Fire activated!', 1);
         
-        // Reset after duration
-        setTimeout(() => {
+        // Log the change
+        console.log(`Rapid Fire activated! Fire rate increased from ${originalFireRate.toFixed(2)} to ${newFireRate.toFixed(2)}`);
+        
+        // Reset after 8 seconds
+        const timerId = setTimeout(() => {
+            // Reset fire rate to original value
             player.primaryWeapon.fireRate = originalFireRate;
+            
+            // Show message
             game.uiSystem.showAlert('Rapid Fire ended', 1);
-        }, 5000); // 5 seconds
+            
+            // Log the reset
+            console.log(`Rapid Fire ended. Fire rate reset to ${originalFireRate.toFixed(2)}`);
+        }, 8000);
+        
+        // Store the timer ID to allow for cancellation if needed
+        player.activeEffects = player.activeEffects || {};
+        player.activeEffects.rapidFire = {
+            timerId: timerId,
+            endTime: game.gameTime + 8
+        };
     },
     
     PRECISION_SHOT: function(game, player) {

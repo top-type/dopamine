@@ -43,6 +43,9 @@ class Player extends Entity {
             // Default abilities will be added by specializations
         ];
         
+        // Active effects tracking
+        this.activeEffects = {};
+        
         // Inventory - ensure it's initialized as an array
         this.inventory = [];
         this.maxInventorySize = 20;
@@ -145,8 +148,15 @@ class Player extends Entity {
         // Primary weapon
         if (this.game.input.isKeyDown('primary')) {
             const timeSinceLastFire = currentTime - this.primaryWeapon.lastFireTime;
+            const fireInterval = 1 / this.primaryWeapon.fireRate;
             
-            if (timeSinceLastFire >= 1 / this.primaryWeapon.fireRate) {
+            // Debug fire rate every second
+            if (Math.floor(currentTime) > Math.floor(this.lastFireRateDebugTime || 0)) {
+                console.log(`Current fire rate: ${this.primaryWeapon.fireRate.toFixed(2)} shots/sec (interval: ${fireInterval.toFixed(3)}s)`);
+                this.lastFireRateDebugTime = currentTime;
+            }
+            
+            if (timeSinceLastFire >= fireInterval) {
                 this.firePrimaryWeapon();
                 this.primaryWeapon.lastFireTime = currentTime;
             }
@@ -312,13 +322,42 @@ class Player extends Entity {
                     break;
                     
                 case 'rapid fire':
-                    // Temporary fire rate boost
-                    this.primaryWeapon.fireRate *= 2;
+                    // Store the original fire rate
+                    const originalFireRate = this.primaryWeapon.fireRate;
                     
-                    // Reset after 5 seconds
-                    setTimeout(() => {
-                        this.primaryWeapon.fireRate /= 2;
-                    }, 5000);
+                    // Calculate new fire rate (150% increase)
+                    const newFireRate = originalFireRate * 2.5;
+                    
+                    // Apply the new fire rate
+                    this.primaryWeapon.fireRate = newFireRate;
+                    
+                    // Create visual effect
+                    this.game.particleSystem.createExplosion(this.x, this.y, '#ff5555', 20, 3, 100);
+                    
+                    // Show message
+                    this.game.uiSystem.showAlert('Rapid Fire activated!', 1);
+                    
+                    // Log the change
+                    console.log(`Rapid Fire activated! Fire rate increased from ${originalFireRate.toFixed(2)} to ${newFireRate.toFixed(2)}`);
+                    
+                    // Reset after 8 seconds
+                    const timerId = setTimeout(() => {
+                        // Reset fire rate to original value
+                        this.primaryWeapon.fireRate = originalFireRate;
+                        
+                        // Show message
+                        this.game.uiSystem.showAlert('Rapid Fire ended', 1);
+                        
+                        // Log the reset
+                        console.log(`Rapid Fire ended. Fire rate reset to ${originalFireRate.toFixed(2)}`);
+                    }, 8000);
+                    
+                    // Store the timer ID to allow for cancellation if needed
+                    this.activeEffects = this.activeEffects || {};
+                    this.activeEffects.rapidFire = {
+                        timerId: timerId,
+                        endTime: this.game.gameTime + 8
+                    };
                     break;
                     
                 case 'bomb':
@@ -379,6 +418,9 @@ class Player extends Entity {
      * Player death
      */
     die() {
+        // Clean up any active effects
+        this.cleanupActiveEffects();
+        
         // Create explosion effect
         this.game.particleSystem.createExplosion(this.x, this.y, '#00ffff', 50, 5, 200);
         
@@ -647,5 +689,24 @@ class Player extends Entity {
         }
         
         return null;
+    }
+    
+    /**
+     * Clean up any active effects
+     */
+    cleanupActiveEffects() {
+        if (this.activeEffects) {
+            // Clear any active timers
+            if (this.activeEffects.rapidFire && this.activeEffects.rapidFire.timerId) {
+                clearTimeout(this.activeEffects.rapidFire.timerId);
+                console.log('Cleared Rapid Fire effect timer');
+            }
+            
+            // Reset any modified stats
+            this.primaryWeapon.fireRate = 5; // Reset to default fire rate
+            
+            // Clear the effects object
+            this.activeEffects = {};
+        }
     }
 } 

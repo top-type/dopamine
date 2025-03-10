@@ -204,4 +204,17 @@ class ProgressionSystem {
         // Add XP to player
         this.game.addXP(amount);
     }
+    
+    /**
+     * Reset the progression system
+     */
+    reset() {
+        console.log('Resetting progression system');
+        
+        // Reset spawn timers
+        this.lastEnemySpawnTime = 0;
+        this.lastBossSpawnDepth = 0;
+        
+        console.log('Progression system reset');
+    }
 } 

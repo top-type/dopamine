@@ -16,10 +16,10 @@ class SpecializationSystem {
                     {
                         id: 'rapid_fire',
                         name: 'Rapid Fire',
-                        description: 'Temporarily increases fire rate by 50%',
+                        description: 'Temporarily increases fire rate by 150%',
                         type: 'active',
-                        cooldown: 15,
-                        duration: 5,
+                        cooldown: 10,
+                        duration: 8,
                         level: 1, // Starting level
                         maxLevel: 3,
                         specialization: 'gunner',
@@ -28,9 +28,14 @@ class SpecializationSystem {
                         requiredLevel: 1, // Player level required
                         prerequisites: [], // No prerequisites for first skill
                         effect: function(game, player) {
-                            // Temporary fire rate boost
+                            // Store the original fire rate
                             const originalFireRate = player.primaryWeapon.fireRate;
-                            player.primaryWeapon.fireRate *= 1.5;
+                            
+                            // Calculate new fire rate (150% increase)
+                            const newFireRate = originalFireRate * 2.5;
+                            
+                            // Apply the new fire rate
+                            player.primaryWeapon.fireRate = newFireRate;
                             
                             // Create visual effect
                             game.particleSystem.createExplosion(player.x, player.y, '#ff5555', 20, 3, 100);
@@ -38,11 +43,30 @@ class SpecializationSystem {
                             // Show message
                             game.uiSystem.showAlert('Rapid Fire activated!', 1);
                             
+                            // Log the change
+                            console.log(`Rapid Fire activated! Fire rate increased from ${originalFireRate.toFixed(2)} to ${newFireRate.toFixed(2)}`);
+                            
+                            // Store the duration value from the skill (important to capture it in this scope)
+                            const duration = this.duration || 5; // Default to 5 seconds if duration is undefined
+                            
                             // Reset after duration
-                            setTimeout(() => {
+                            const timerId = setTimeout(() => {
+                                // Reset fire rate to original value
                                 player.primaryWeapon.fireRate = originalFireRate;
+                                
+                                // Show message
                                 game.uiSystem.showAlert('Rapid Fire ended', 1);
-                            }, this.duration * 1000);
+                                
+                                // Log the reset
+                                console.log(`Rapid Fire ended. Fire rate reset to ${originalFireRate.toFixed(2)}`);
+                            }, duration * 1000);
+                            
+                            // Store the timer ID on the player to allow for cancellation if needed
+                            player.activeEffects = player.activeEffects || {};
+                            player.activeEffects.rapidFire = {
+                                timerId: timerId,
+                                endTime: game.gameTime + duration
+                            };
                         }
                     },
                     {
@@ -1757,5 +1781,31 @@ class SpecializationSystem {
     loadSkillData(skillData) {
         // Placeholder for loading skill data
         // Can be expanded later to load skill levels
+    }
+    
+    /**
+     * Reset the specialization system
+     */
+    reset() {
+        console.log('Resetting specialization system');
+        
+        // Reset selected specializations
+        this.selectedSpecializations = [];
+        
+        // Reset pending unlock flag
+        this.pendingSpecializationUnlock = false;
+        
+        // Reset all skills to their initial state
+        this.availableSpecializations.forEach(spec => {
+            spec.skills.forEach(skill => {
+                // Reset skill level
+                if (skill.id !== 'rapid_fire' && skill.id !== 'shield_surge' && skill.id !== 'time_warp') {
+                    // These are the starting skills that should be level 1 by default
+                    skill.level = 0;
+                }
+            });
+        });
+        
+        console.log('Specialization system reset');
     }
 } 

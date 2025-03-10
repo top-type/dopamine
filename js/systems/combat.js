@@ -186,4 +186,13 @@ class CombatSystem {
         // Ensure damage is at least 1
         return Math.max(1, damage);
     }
+    
+    /**
+     * Reset the combat system
+     */
+    reset() {
+        console.log('Resetting combat system');
+        // Nothing specific to reset in the combat system
+        console.log('Combat system reset');
+    }
 } 

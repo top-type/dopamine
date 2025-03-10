@@ -881,4 +881,33 @@ class UISystem {
             );
         }
     }
+    
+    /**
+     * Reset the UI system
+     */
+    reset() {
+        console.log('Resetting UI system');
+        
+        // Reset UI state
+        this.isInventoryOpen = false;
+        this.isSkillTreeOpen = false;
+        
+        // Clear UI overlay
+        this.uiOverlay.innerHTML = '';
+        this.uiOverlay.classList.add('hidden');
+        
+        // Hide any open panels
+        const panels = document.querySelectorAll('.game-panel');
+        panels.forEach(panel => {
+            panel.classList.add('hidden');
+        });
+        
+        // Hide menu screen
+        const menuScreen = document.getElementById('menu-screen');
+        if (menuScreen) {
+            menuScreen.classList.add('hidden');
+        }
+        
+        console.log('UI system reset');
+    }
 } 

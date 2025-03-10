@@ -766,4 +766,63 @@ class Game {
         
         shopContent.appendChild(shopLayout);
     }
+    
+    /**
+     * Restart the game by resetting all game state
+     */
+    restart() {
+        console.log('Restarting game...');
+        
+        // Reset game state
+        this.isRunning = false;
+        this.isPaused = false;
+        this.gameTime = 0;
+        this.lastTimestamp = 0;
+        this.deltaTime = 0;
+        
+        // Reset game objects
+        this.player = null;
+        this.entities = [];
+        this.projectiles = [];
+        this.effects = [];
+        
+        // Reset game data
+        this.depth = 0;
+        this.gold = 0;
+        this.level = 1;
+        this.xp = 0;
+        this.xpToNextLevel = 100;
+        this.skillPoints = 0;
+        
+        // Reset systems
+        this.specializationSystem.reset();
+        this.uiSystem.reset();
+        
+        if (this.particleSystem) {
+            this.particleSystem.reset();
+        }
+        
+        if (this.combatSystem) {
+            this.combatSystem.reset();
+        }
+        
+        if (this.progressionSystem) {
+            this.progressionSystem.reset();
+        }
+        
+        if (this.equipmentSystem) {
+            this.equipmentSystem.reset();
+        }
+        
+        // Reset specializations array
+        this.selectedSpecializations = [];
+        
+        // Hide game over screen
+        document.getElementById('game-over-screen').classList.add('hidden');
+        
+        // Show start screen
+        document.getElementById('start-screen').classList.remove('hidden');
+        
+        console.log('Game restarted');
+    }
 } 

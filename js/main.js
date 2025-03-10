@@ -29,8 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Set up event listeners for the game over screen
     document.getElementById('restart-button').addEventListener('click', () => {
-        document.getElementById('game-over-screen').classList.add('hidden');
-        document.getElementById('start-screen').classList.remove('hidden');
+        game.restart();
     });
     
     // Set up event listeners for the menu screen

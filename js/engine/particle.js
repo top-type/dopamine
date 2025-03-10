@@ -198,4 +198,16 @@ class ParticleSystem {
     clear() {
         this.particles = [];
     }
+    
+    /**
+     * Reset the particle system
+     */
+    reset() {
+        console.log('Resetting particle system');
+        
+        // Clear all particles
+        this.particles = [];
+        
+        console.log('Particle system reset');
+    }
 } 

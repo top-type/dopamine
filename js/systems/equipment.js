@@ -861,4 +861,22 @@ class EquipmentSystem {
             this.game.uiSystem.updateInventoryDisplay();
         }
     }
+    
+    /**
+     * Reset the equipment system
+     */
+    reset() {
+        console.log('Resetting equipment system');
+        
+        // Reset equipment slots
+        this.equippedItems = {
+            primaryWeapon: null,
+            armor: null,
+            engine: null,
+            shield: null,
+            special: null
+        };
+        
+        console.log('Equipment system reset');
+    }
 } 
