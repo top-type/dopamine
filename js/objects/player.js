@@ -160,12 +160,6 @@ export class Player extends Entity {
             const timeSinceLastFire = currentTime - this.primaryWeapon.lastFireTime;
             const fireInterval = 1 / this.primaryWeapon.fireRate;
             
-            // Debug fire rate every second
-            if (Math.floor(currentTime) > Math.floor(this.lastFireRateDebugTime || 0)) {
-                console.log(`Current fire rate: ${this.primaryWeapon.fireRate.toFixed(2)} shots/sec (interval: ${fireInterval.toFixed(3)}s)`);
-                this.lastFireRateDebugTime = currentTime;
-            }
-            
             if (timeSinceLastFire >= fireInterval) {
                 this.firePrimaryWeapon();
                 this.primaryWeapon.lastFireTime = currentTime;
@@ -246,39 +240,29 @@ export class Player extends Entity {
         // Ensure multiShotLevel is a valid number
         const multiShotLevel = Number(this.multiShotLevel) || 0;
         
-        // Debug log for multishot
-        console.log(`firePrimaryWeapon - multiShotLevel: ${multiShotLevel} (original: ${this.multiShotLevel}, type: ${typeof this.multiShotLevel})`);
-        
         // Check for critical strike chance
         let criticalHit = false;
         if (this.criticalStrikeChance && Math.random() < this.criticalStrikeChance) {
             criticalHit = true;
-            console.log(`Critical Strike triggered! (${this.criticalStrikeChance * 100}% chance)`);
         }
         
-        // Always fire the main projectile (center)
+        // Fire the main projectile straight ahead
         this.createProjectile(spawnX, spawnY, this.rotation, criticalHit);
         
-        // Add additional projectiles based on multishot level (up to max level 20)
+        // If we have multishot, fire additional projectiles in a spread pattern
         if (multiShotLevel > 0) {
-            console.log(`Firing multishot at level ${multiShotLevel}`);
+            // Calculate spread angle based on multishot level
+            // More projectiles = tighter spread to avoid them being too spread out
+            const spreadAngle = Math.min(Math.PI / 3, 0.1 + (multiShotLevel * 0.02));
             
-            // Calculate the maximum spread angle - scales with level
-            // Lower spread for higher levels to keep the pattern usable
-            const maxSpreadAngle = Math.min(0.8, 0.05 * multiShotLevel);
+            // Calculate the angle between each projectile
+            const angleStep = spreadAngle / (multiShotLevel + 1);
             
-            // Fire additional projectiles equal to multishot level, with increasing spread
-            for (let i = 1; i <= Math.min(multiShotLevel, 20); i++) {
-                // Calculate spread pattern to alternate left and right
-                // For odd indices, fire to the right. For even indices, fire to the left
-                const spreadDirection = i % 2 === 1 ? 1 : -1;
-                // Calculate which "pair" this projectile belongs to (1st pair, 2nd pair, etc.)
-                const pairIndex = Math.ceil(i / 2);
-                // Calculate the angle offset based on the pair index
-                const angleOffset = (pairIndex / (multiShotLevel + 1)) * maxSpreadAngle * spreadDirection;
-                
-                // Fire the projectile at the calculated angle
-                this.createProjectile(spawnX, spawnY, this.rotation + angleOffset, criticalHit);
+            // Fire additional projectiles
+            for (let i = 1; i <= multiShotLevel; i++) {
+                // Alternate left and right
+                const angle = this.rotation + (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * angleStep;
+                this.createProjectile(spawnX, spawnY, angle, criticalHit);
             }
         }
         

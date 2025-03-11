@@ -3,6 +3,30 @@
 
 import { Game } from './engine/game.js';
 
+/**
+ * Ensures a DOM element exists, creating it if needed
+ * @param {string} id - Element ID
+ * @param {string} className - CSS class to apply
+ * @param {string} parentId - Parent element ID
+ * @returns {HTMLElement} - The existing or created element
+ */
+function ensureElementExists(id, className, parentId) {
+    let element = document.getElementById(id);
+    
+    if (!element) {
+        const parent = document.getElementById(parentId);
+        if (parent) {
+            element = document.createElement('div');
+            element.id = id;
+            element.className = className;
+            parent.appendChild(element);
+            console.log(`Created missing element: ${id}`);
+        }
+    }
+    
+    return element;
+}
+
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Dopamine - Space Shooter RPG initializing...');
@@ -10,18 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the game
     const game = new Game();
     
-    // Ensure skills-content exists
-    const menuContent = document.getElementById('menu-content');
-    if (menuContent) {
-        const skillsContent = document.getElementById('skills-content');
-        if (!skillsContent) {
-            console.log('Creating skills-content element');
-            const newSkillsContent = document.createElement('div');
-            newSkillsContent.id = 'skills-content';
-            newSkillsContent.className = 'tab-content';
-            menuContent.appendChild(newSkillsContent);
-        }
-    }
+    // Ensure all required UI elements exist
+    ensureElementExists('skills-content', 'tab-content', 'menu-content');
+    ensureElementExists('inventory-content', 'tab-content', 'menu-content');
+    ensureElementExists('shop-content', 'tab-content', 'menu-content');
     
     // Set up event listeners for the start screen
     document.getElementById('start-button').addEventListener('click', () => {
@@ -54,19 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
             tab.classList.add('active');
             const contentId = tab.id.replace('tab-', '') + '-content';
             
-            // Ensure the content element exists
-            let contentElement = document.getElementById(contentId);
-            if (!contentElement && menuContent) {
-                console.log(`Creating missing content element: ${contentId}`);
-                contentElement = document.createElement('div');
-                contentElement.id = contentId;
-                contentElement.className = 'tab-content';
-                menuContent.appendChild(contentElement);
-            }
-            
-            if (contentElement) {
-                contentElement.classList.add('active');
-            }
+            // Ensure the content element exists and activate it
+            const contentElement = ensureElementExists(contentId, 'tab-content', 'menu-content');
+            contentElement.classList.add('active');
             
             // Load content based on tab
             if (tab.id === 'tab-inventory') {

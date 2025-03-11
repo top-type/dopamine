@@ -38,9 +38,6 @@ export class SpecializationSystem {
                             
                             // Update description based on level
                             this.levelDescription = `Fires ${level} additional projectile${level > 1 ? 's' : ''} in a spread pattern`;
-                            
-                            console.log(`Multi Shot level changed to ${level}, setting effect value to ${this.effects[0].value} (type: ${typeof this.effects[0].value})`);
-                            console.log(`Multi Shot effect at level ${level}: ${this.levelDescription}`);
                         }
                     },
                     {

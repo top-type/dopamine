@@ -48,32 +48,73 @@ dopamine/
 └── index.html              # Main HTML file
 ```
 
-## Refactoring Changes
+## Recent Improvements
 
-The codebase has been refactored with the following improvements:
+The codebase has been optimized with the following changes:
 
-1. **ES Modules**: Converted from global classes to ES modules for better encapsulation and dependency management.
+1. **Removed Debug Logging**: Eliminated unnecessary console.log statements that were slowing down the game.
 
-2. **Configuration System**: Created a centralized configuration system to manage game settings.
+2. **Fixed Multi-Shot Skill**: Improved the implementation of the multi-shot skill to ensure consistent behavior.
 
-3. **State Management**: Implemented a dedicated state manager to handle game state transitions.
+3. **Enhanced Critical Hit Logic**: Fixed critical strike logic in projectile firing.
 
-4. **CSS Modularization**: Split the CSS into modular files for better organization.
+4. **Improved Server Performance**: Enhanced the Python server for better MIME type handling and error reporting.
 
-5. **Utility Functions**: Created a utility module for common helper functions.
+5. **DOM Element Handling**: Implemented a helper function to ensure UI elements exist when needed.
 
-6. **Event Handling**: Centralized event handling in the Game class.
+6. **HTML Optimization**: Added preloading directives and improved meta tags.
 
-7. **Code Documentation**: Improved code documentation with JSDoc comments.
+7. **Fixed Race Conditions**: Corrected issues with loading UI components.
 
 ## Development
 
-To run the game locally, simply open the `index.html` file in a modern web browser that supports ES modules.
+### Running the Game Locally
 
-## Browser Compatibility
+To run the game, use the included Python server:
+
+```bash
+python server.py
+```
+
+This will start a server at http://localhost:8000 and automatically open the game in your default browser.
+
+### System Requirements
 
 The game requires a modern browser that supports:
 - ES Modules
 - Canvas API
 - Web Audio API
-- Local Storage API 
+- Local Storage API
+
+### Controls
+
+- **WASD or Arrow Keys**: Movement
+- **Space**: Fire primary weapon
+- **1-5**: Special abilities (when unlocked)
+- **ESC**: Open/close menu
+
+## Character Specializations
+
+The game features multiple character specializations:
+
+1. **Gunner**: Focused on weapons and offensive capabilities
+   - Multi Shot: Fire additional projectiles
+   - Precision Targeting: Increased damage
+   - Critical Strike: Chance for double damage
+
+2. **Juggernaut**: Defensive capabilities and shield enhancements
+   - Shield Surge: Temporarily increases shield capacity
+   - Reinforced Hull: Increases shield capacity
+   - Ramming Speed: Increases collision damage
+
+Other specializations include Chronos, Amplifier, and Mechanic, each with unique abilities.
+
+## Future Development
+
+Planned features include:
+- Additional enemy types
+- Boss battles
+- More specializations and skills
+- Enhanced shop functionality
+- Achievements system
+- Multiplayer mode 

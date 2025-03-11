@@ -3,6 +3,8 @@
  * This file contains default skill data that can be used by the specialization system
  */
 
+import { Projectile } from '../objects/projectile.js';
+
 // Skill configuration - Single source of truth for all skill parameters
 export const SKILL_CONFIG = {
     RAPID_FIRE: {
@@ -31,20 +33,13 @@ export const SKILL_EFFECTS = {
     },
     
     MULTI_SHOT: function(game, player) {
-        // This is now a passive ability
-        // However, let's add some specific debug to ensure it's being called
-        console.log("MULTI_SHOT passive skill effect called");
-        
-        if (player) {
-            // Since we're here, let's make sure the player's multiShotLevel is set correctly
-            // Find the multi_shot skill in the gunner specialization
-            const gunnerSpec = game.specializationSystem.getSpecializationById('gunner');
-            if (gunnerSpec) {
-                const multiShotSkill = gunnerSpec.skills.find(skill => skill.id === 'multi_shot');
-                if (multiShotSkill && multiShotSkill.level > 0) {
-                    player.multiShotLevel = multiShotSkill.level;
-                    console.log(`MULTI_SHOT effect: Set player's multiShotLevel to ${player.multiShotLevel}`);
-                }
+        // This is a passive ability
+        // Set the player's multiShotLevel properly
+        const gunnerSpec = game.specializationSystem.getSpecializationById('gunner');
+        if (gunnerSpec) {
+            const multiShotSkill = gunnerSpec.skills.find(skill => skill.id === 'multi_shot');
+            if (multiShotSkill && multiShotSkill.level > 0) {
+                player.multiShotLevel = multiShotSkill.level;
             }
         }
     },
