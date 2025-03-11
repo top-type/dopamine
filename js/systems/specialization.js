@@ -16,20 +16,27 @@ export class SpecializationSystem {
                 color: '#ff5555',
                 skills: [
                     {
-                        id: 'rapid_fire',
-                        name: 'Rapid Fire',
-                        description: `Temporarily increases fire rate by ${(SKILL_CONFIG.RAPID_FIRE.multiplier - 1) * 100}%`,
-                        type: 'active',
-                        cooldown: SKILL_CONFIG.RAPID_FIRE.cooldown,
-                        duration: SKILL_CONFIG.RAPID_FIRE.duration,
-                        level: 1, // Starting level
+                        id: 'multi_shot',
+                        name: 'Multi Shot',
+                        description: 'Fires additional projectiles based on skill level',
+                        type: 'passive',
+                        level: 0,
                         maxLevel: 3,
                         specialization: 'gunner',
-                        icon: '🔥',
+                        icon: '🔫',
                         position: { row: 0, col: 1 }, // Position in skill tree
                         requiredLevel: 1, // Player level required
                         prerequisites: [], // No prerequisites for first skill
-                        effect: SKILL_EFFECTS.RAPID_FIRE
+                        effects: [
+                            {
+                                type: 'multiShot',
+                                value: 1.0 // This is the value for level 1, will be updated based on skill level
+                            }
+                        ],
+                        onLevelChange: function(level) {
+                            this.effects[0].value = Number(level);
+                            console.log(`Multi Shot skill level changed to ${level}, setting effect value to ${this.effects[0].value} (type: ${typeof this.effects[0].value})`);
+                        }
                     },
                     {
                         id: 'precision_targeting',
@@ -42,7 +49,7 @@ export class SpecializationSystem {
                         icon: '🎯',
                         position: { row: 1, col: 0 }, // Position in skill tree
                         requiredLevel: 3, // Player level required
-                        prerequisites: ['rapid_fire'], // Requires Rapid Fire
+                        prerequisites: ['multi_shot'], // Updated prerequisite
                         effects: [
                             {
                                 type: 'damage',
@@ -51,23 +58,29 @@ export class SpecializationSystem {
                         ]
                     },
                     {
-                        id: 'double_shot',
-                        name: 'Double Shot',
-                        description: 'Chance to fire an additional projectile',
+                        id: 'critical_strike',
+                        name: 'Critical Strike',
+                        description: 'Chance for projectiles to deal double damage',
                         type: 'passive',
                         level: 0,
                         maxLevel: 3,
                         specialization: 'gunner',
-                        icon: '🔫',
+                        icon: '🎯',
                         position: { row: 1, col: 2 }, // Position in skill tree
                         requiredLevel: 3, // Player level required
-                        prerequisites: ['rapid_fire'], // Requires Rapid Fire
+                        prerequisites: ['multi_shot'], // Updated prerequisite
                         effects: [
                             {
-                                type: 'doubleShot',
-                                value: 0.2 // 20% chance
+                                type: 'criticalStrike',
+                                value: 0.15 // 15% chance
                             }
-                        ]
+                        ],
+                        onLevelChange: function(level) {
+                            // Increase critical strike chance with level
+                            // Level 1: 15%, Level 2: 25%, Level 3: 35%
+                            this.effects[0].value = 0.15 + (level - 1) * 0.1;
+                            console.log(`Critical Strike level changed to ${level}, setting chance to ${this.effects[0].value * 100}%`);
+                        }
                     },
                     {
                         id: 'bullet_storm',
@@ -82,7 +95,7 @@ export class SpecializationSystem {
                         icon: '☄️',
                         position: { row: 2, col: 1 }, // Position in skill tree
                         requiredLevel: 5, // Player level required
-                        prerequisites: ['precision_targeting', 'double_shot'], // Requires both previous skills
+                        prerequisites: ['precision_targeting', 'critical_strike'], // Requires both previous skills
                         effect: function(game, player) {
                             // Create bullet storm effect
                             const bulletCount = 16; // Fire 16 bullets in a circle
@@ -145,7 +158,7 @@ export class SpecializationSystem {
                         type: 'active',
                         cooldown: 30,
                         duration: 8,
-                        level: 1,
+                        level: 0,
                         maxLevel: 3,
                         specialization: 'juggernaut',
                         icon: '🛡️',
@@ -304,7 +317,7 @@ export class SpecializationSystem {
                         type: 'active',
                         cooldown: 15,
                         duration: 3,
-                        level: 1,
+                        level: 0,
                         maxLevel: 3,
                         specialization: 'chronos',
                         icon: '⚡',
@@ -830,7 +843,7 @@ export class SpecializationSystem {
                         type: 'active',
                         cooldown: 30,
                         duration: 10,
-                        level: 1,
+                        level: 0,
                         maxLevel: 3,
                         specialization: 'mechanic',
                         icon: '🔧',
@@ -870,7 +883,7 @@ export class SpecializationSystem {
                         type: 'active',
                         cooldown: 45,
                         duration: 8,
-                        level: 1,
+                        level: 0,
                         maxLevel: 3,
                         specialization: 'mechanic',
                         icon: '⚡',
@@ -1292,6 +1305,32 @@ export class SpecializationSystem {
         skill.level++;
         this.game.skillPoints--;
         
+        // If the skill has an onLevelChange handler, call it
+        if (typeof skill.onLevelChange === 'function') {
+            console.log(`Calling onLevelChange handler for ${skill.name}`);
+            skill.onLevelChange(skill.level);
+        } 
+        // Otherwise update effect values for special cases like multi_shot
+        else if (skill.id === 'multi_shot') {
+            // Set the effect value to the skill level for multi_shot
+            skill.effects.forEach(effect => {
+                if (effect.type === 'multiShot') {
+                    effect.value = skill.level;
+                    console.log(`Manually updated multiShot effect value to ${effect.value}`);
+                }
+            });
+        }
+        // Add special case for critical_strike if needed
+        else if (skill.id === 'critical_strike') {
+            // Set the effect value based on level
+            skill.effects.forEach(effect => {
+                if (effect.type === 'criticalStrike') {
+                    effect.value = 0.15 + (skill.level - 1) * 0.1;
+                    console.log(`Manually updated criticalStrike chance to ${effect.value * 100}%`);
+                }
+            });
+        }
+        
         console.log(`Upgraded skill ${skill.name} to level ${skill.level}`);
         
         // If this is the first level, add the skill to the player
@@ -1299,8 +1338,22 @@ export class SpecializationSystem {
             console.log(`Adding skill ${skill.name} to player`);
             this.game.player.addSkill(skill);
         } else {
-            console.log(`Updating skill ${skill.name} for player`);
+            console.log(`Updating skill ${skill.name} for player to level ${skill.level}`);
+            
+            // Debug: Check if the skill object being passed has the correct level
+            console.log(`Skill object being passed to updateSkill:`, {
+                id: skill.id,
+                name: skill.name,
+                level: skill.level,
+                type: skill.type
+            });
+            
             this.game.player.updateSkill(skill);
+            
+            // Debug: Check player's multiShotLevel after update
+            if (skill.id === 'multi_shot') {
+                console.log(`Player's multiShotLevel after update: ${this.game.player.multiShotLevel}`);
+            }
         }
         
         // Update UI
@@ -1760,11 +1813,8 @@ export class SpecializationSystem {
         // Reset all skills to their initial state
         this.availableSpecializations.forEach(spec => {
             spec.skills.forEach(skill => {
-                // Reset skill level
-                if (skill.id !== 'rapid_fire' && skill.id !== 'shield_surge' && skill.id !== 'time_warp') {
-                    // These are the starting skills that should be level 1 by default
-                    skill.level = 0;
-                }
+                // Reset all skills to level 0
+                skill.level = 0;
             });
         });
         

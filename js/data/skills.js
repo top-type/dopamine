@@ -10,6 +10,9 @@ export const SKILL_CONFIG = {
         duration: 8,         // Effect duration in seconds
         cooldown: 10         // Cooldown in seconds
     },
+    MULTI_SHOT: {
+        passive: true        // Flag indicating this is a passive ability
+    },
     // Add other skills here as needed
 };
 
@@ -25,6 +28,25 @@ export const SKILL_EFFECTS = {
             SKILL_CONFIG.RAPID_FIRE.duration,   // Duration
             '#ff5555'                          // Effect color
         );
+    },
+    
+    MULTI_SHOT: function(game, player) {
+        // This is now a passive ability
+        // However, let's add some specific debug to ensure it's being called
+        console.log("MULTI_SHOT passive skill effect called");
+        
+        if (player) {
+            // Since we're here, let's make sure the player's multiShotLevel is set correctly
+            // Find the multi_shot skill in the gunner specialization
+            const gunnerSpec = game.specializationSystem.getSpecializationById('gunner');
+            if (gunnerSpec) {
+                const multiShotSkill = gunnerSpec.skills.find(skill => skill.id === 'multi_shot');
+                if (multiShotSkill && multiShotSkill.level > 0) {
+                    player.multiShotLevel = multiShotSkill.level;
+                    console.log(`MULTI_SHOT effect: Set player's multiShotLevel to ${player.multiShotLevel}`);
+                }
+            }
+        }
     },
     
     PRECISION_SHOT: function(game, player) {
