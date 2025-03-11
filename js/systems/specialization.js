@@ -18,10 +18,10 @@ export class SpecializationSystem {
                     {
                         id: 'multi_shot',
                         name: 'Multi Shot',
-                        description: 'Fires additional projectiles based on skill level',
+                        description: 'Fires additional projectiles based on skill level. Each level adds one more projectile to your shots (maximum 20 extra projectiles).',
                         type: 'passive',
                         level: 0,
-                        maxLevel: 3,
+                        maxLevel: 20,
                         specialization: 'gunner',
                         icon: '🔫',
                         position: { row: 0, col: 1 }, // Position in skill tree
@@ -35,7 +35,12 @@ export class SpecializationSystem {
                         ],
                         onLevelChange: function(level) {
                             this.effects[0].value = Number(level);
-                            console.log(`Multi Shot skill level changed to ${level}, setting effect value to ${this.effects[0].value} (type: ${typeof this.effects[0].value})`);
+                            
+                            // Update description based on level
+                            this.levelDescription = `Fires ${level} additional projectile${level > 1 ? 's' : ''} in a spread pattern`;
+                            
+                            console.log(`Multi Shot level changed to ${level}, setting effect value to ${this.effects[0].value} (type: ${typeof this.effects[0].value})`);
+                            console.log(`Multi Shot effect at level ${level}: ${this.levelDescription}`);
                         }
                     },
                     {

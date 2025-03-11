@@ -256,26 +256,30 @@ export class Player extends Entity {
             console.log(`Critical Strike triggered! (${this.criticalStrikeChance * 100}% chance)`);
         }
         
-        // Create the main projectile (always fired)
+        // Always fire the main projectile (center)
         this.createProjectile(spawnX, spawnY, this.rotation, criticalHit);
         
-        // Use the stored multiShotLevel instead of querying specialization system
-        if (multiShotLevel >= 1) {
+        // Add additional projectiles based on multishot level (up to max level 20)
+        if (multiShotLevel > 0) {
             console.log(`Firing multishot at level ${multiShotLevel}`);
             
-            // Level 1: Add right projectile
-            this.createProjectile(spawnX, spawnY, this.rotation + 0.15, criticalHit);
-        }
-        
-        if (multiShotLevel >= 2) {
-            // Level 2: Add left projectile
-            this.createProjectile(spawnX, spawnY, this.rotation - 0.15, criticalHit);
-        }
-        
-        if (multiShotLevel >= 3) {
-            // Level 3: Add center-right and center-left projectiles
-            this.createProjectile(spawnX, spawnY, this.rotation + 0.07, criticalHit);
-            this.createProjectile(spawnX, spawnY, this.rotation - 0.07, criticalHit);
+            // Calculate the maximum spread angle - scales with level
+            // Lower spread for higher levels to keep the pattern usable
+            const maxSpreadAngle = Math.min(0.8, 0.05 * multiShotLevel);
+            
+            // Fire additional projectiles equal to multishot level, with increasing spread
+            for (let i = 1; i <= Math.min(multiShotLevel, 20); i++) {
+                // Calculate spread pattern to alternate left and right
+                // For odd indices, fire to the right. For even indices, fire to the left
+                const spreadDirection = i % 2 === 1 ? 1 : -1;
+                // Calculate which "pair" this projectile belongs to (1st pair, 2nd pair, etc.)
+                const pairIndex = Math.ceil(i / 2);
+                // Calculate the angle offset based on the pair index
+                const angleOffset = (pairIndex / (multiShotLevel + 1)) * maxSpreadAngle * spreadDirection;
+                
+                // Fire the projectile at the calculated angle
+                this.createProjectile(spawnX, spawnY, this.rotation + angleOffset, criticalHit);
+            }
         }
         
         // Play sound
