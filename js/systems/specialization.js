@@ -1277,8 +1277,6 @@ export class SpecializationSystem {
      * @returns {boolean} Whether the upgrade was successful
      */
     upgradeSkill(specId, skillId) {
-        console.log(`Attempting to upgrade skill ${skillId} in specialization ${specId}`);
-        
         const skill = this.getSkillById(specId, skillId);
         if (!skill) {
             console.error(`Skill ${skillId} not found in specialization ${specId}`);
@@ -1309,7 +1307,6 @@ export class SpecializationSystem {
         
         // If the skill has an onLevelChange handler, call it
         if (typeof skill.onLevelChange === 'function') {
-            console.log(`Calling onLevelChange handler for ${skill.name}`);
             skill.onLevelChange(skill.level);
         } 
         // Otherwise update effect values for special cases like multi_shot
@@ -1318,7 +1315,6 @@ export class SpecializationSystem {
             skill.effects.forEach(effect => {
                 if (effect.type === 'multiShot') {
                     effect.value = skill.level;
-                    console.log(`Manually updated multiShot effect value to ${effect.value}`);
                 }
             });
         }
@@ -1328,34 +1324,15 @@ export class SpecializationSystem {
             skill.effects.forEach(effect => {
                 if (effect.type === 'criticalStrike') {
                     effect.value = 0.15 + (skill.level - 1) * 0.1;
-                    console.log(`Manually updated criticalStrike chance to ${effect.value * 100}%`);
                 }
             });
         }
         
-        console.log(`Upgraded skill ${skill.name} to level ${skill.level}`);
-        
         // If this is the first level, add the skill to the player
         if (skill.level === 1) {
-            console.log(`Adding skill ${skill.name} to player`);
             this.game.player.addSkill(skill);
         } else {
-            console.log(`Updating skill ${skill.name} for player to level ${skill.level}`);
-            
-            // Debug: Check if the skill object being passed has the correct level
-            console.log(`Skill object being passed to updateSkill:`, {
-                id: skill.id,
-                name: skill.name,
-                level: skill.level,
-                type: skill.type
-            });
-            
             this.game.player.updateSkill(skill);
-            
-            // Debug: Check player's multiShotLevel after update
-            if (skill.id === 'multi_shot') {
-                console.log(`Player's multiShotLevel after update: ${this.game.player.multiShotLevel}`);
-            }
         }
         
         // Update UI
@@ -1368,6 +1345,9 @@ export class SpecializationSystem {
             this.game.uiSystem.updateSkillIcons();
         }
         
+        // Update skill points display
+        document.getElementById('skill-points').textContent = this.game.skillPoints;
+        
         return true;
     }
     
@@ -1378,17 +1358,13 @@ export class SpecializationSystem {
      * @returns {boolean} Whether the skill is available
      */
     isSkillAvailable(specId, skillId) {
-        console.log(`Checking if skill ${skillId} is available in specialization ${specId}`);
-        
         const skill = this.getSkillById(specId, skillId);
         if (!skill) {
-            console.error(`Skill ${skillId} not found in specialization ${specId}`);
             return false;
         }
         
         // Check player level requirement
         if (this.game.level < skill.requiredLevel) {
-            console.log(`Player level ${this.game.level} is below required level ${skill.requiredLevel}`);
             return false;
         }
         
@@ -1397,18 +1373,15 @@ export class SpecializationSystem {
             for (const prereqId of skill.prerequisites) {
                 const prereqSkill = this.getSkillById(specId, prereqId);
                 if (!prereqSkill) {
-                    console.error(`Prerequisite skill ${prereqId} not found`);
                     return false;
                 }
                 
                 if (prereqSkill.level === 0) {
-                    console.log(`Prerequisite skill ${prereqSkill.name} is not unlocked`);
                     return false;
                 }
             }
         }
         
-        console.log(`Skill ${skill.name} is available`);
         return true;
     }
     
@@ -1417,8 +1390,6 @@ export class SpecializationSystem {
      * @param {HTMLElement} container - The container element
      */
     renderSkillTree(container) {
-        console.log('Rendering skill tree...');
-        
         // Validate container
         if (!container) {
             console.error('Skill tree container is null or undefined');
@@ -1430,23 +1401,16 @@ export class SpecializationSystem {
         
         // Make sure game.selectedSpecializations is initialized
         if (!this.game.selectedSpecializations) {
-            console.log('Initializing empty selectedSpecializations array');
             this.game.selectedSpecializations = [];
         }
         
         // Make sure specializationUnlockLevels is initialized
         if (!this.specializationUnlockLevels) {
-            console.log('Initializing specializationUnlockLevels');
             this.specializationUnlockLevels = [2, 10]; // First at level 2, second at level 10
         }
         
-        console.log('Selected specializations:', this.game.selectedSpecializations);
-        console.log('Current player level:', this.game.level);
-        
         // If no specializations are selected yet, show a message
         if (this.game.selectedSpecializations.length === 0) {
-            console.log('No specializations selected, showing empty message');
-            
             const emptyMessage = document.createElement('div');
             emptyMessage.className = 'empty-skill-tree-message';
             
@@ -1454,12 +1418,10 @@ export class SpecializationSystem {
             
             // Check if any specializations can be unlocked
             if (this.pendingSpecializationUnlock) {
-                console.log('Specialization can be unlocked, showing unlock button');
                 message += `<p>You can unlock your first specialization now!</p>
                 <button id="unlock-specialization-button" class="primary-button">Choose Specialization</button>`;
             } else {
                 const nextUnlockLevel = this.specializationUnlockLevels[0];
-                console.log(`Next specialization unlocks at level ${nextUnlockLevel}`);
                 message += `<p>Reach level ${nextUnlockLevel} to unlock your first specialization.</p>`;
             }
             
@@ -1469,7 +1431,6 @@ export class SpecializationSystem {
             // Add event listener for the unlock button if it exists
             const unlockButton = document.getElementById('unlock-specialization-button');
             if (unlockButton) {
-                console.log('Adding event listener to unlock button');
                 unlockButton.addEventListener('click', () => {
                     this.showSpecializationSelection();
                 });
@@ -1486,8 +1447,6 @@ export class SpecializationSystem {
                 console.error(`Specialization with ID ${specId} not found`);
                 return;
             }
-            
-            console.log(`Rendering specialization: ${spec.name}`);
             
             // Create specialization element
             const specElement = document.createElement('div');
@@ -1550,8 +1509,6 @@ export class SpecializationSystem {
                         gridElement.appendChild(emptyCell);
                         continue;
                     }
-                    
-                    console.log(`Rendering skill at position [${row},${col}]: ${skill.name} (Level: ${skill.level})`);
                     
                     // Check if skill is available
                     const isAvailable = this.isSkillAvailable(spec.id, skill.id);
@@ -1638,15 +1595,11 @@ export class SpecializationSystem {
      * @param {HTMLElement} container - The container element
      */
     showSkillDetails(specId, skillId, container) {
-        console.log(`Showing skill details for ${skillId} in specialization ${specId}`);
-        
         const skill = this.getSkillById(specId, skillId);
         if (!skill) {
             console.error(`Skill ${skillId} not found in specialization ${specId}`);
             return;
         }
-        
-        console.log(`Skill details: ${JSON.stringify(skill)}`);
         
         // Check if details panel already exists and remove it
         const existingPanel = document.querySelector('.skill-details-panel');
@@ -1662,8 +1615,6 @@ export class SpecializationSystem {
         const isAvailable = this.isSkillAvailable(specId, skillId);
         const isUnlocked = skill.level > 0;
         const canUpgrade = isAvailable && skill.level < skill.maxLevel && this.game.skillPoints > 0;
-        
-        console.log(`Skill status: available=${isAvailable}, unlocked=${isUnlocked}, canUpgrade=${canUpgrade}`);
         
         // Show appropriate message based on skill status
         let statusMessage = '';
@@ -1699,6 +1650,40 @@ export class SpecializationSystem {
             statusMessage = '<div class="status-message available">Available</div>';
         }
         
+        // Display level-specific details if available
+        let levelDescription = '';
+        if (skill.levelDescription) {
+            levelDescription = `<p class="level-description">${skill.levelDescription}</p>`;
+        } else if (skill.level > 0 && skill.effects) {
+            // Generate description based on effects
+            const effectDescriptions = skill.effects.map(effect => {
+                switch (effect.type) {
+                    case 'damage':
+                        return `Increases damage by ${(effect.value * 100).toFixed(0)}%`;
+                    case 'fireRate':
+                        return `Increases fire rate by ${(effect.value * 100).toFixed(0)}%`;
+                    case 'shield':
+                        return `Increases shield capacity by ${(effect.value * 100).toFixed(0)}%`;
+                    case 'shieldRegen':
+                        return `Increases shield regeneration by ${(effect.value * 100).toFixed(0)}%`;
+                    case 'speed':
+                        return `Increases speed by ${(effect.value * 100).toFixed(0)}%`;
+                    case 'multiShot':
+                        return `Adds ${effect.value} additional projectile${effect.value > 1 ? 's' : ''}`;
+                    case 'criticalStrike':
+                        return `${(effect.value * 100).toFixed(0)}% chance for critical hits`;
+                    case 'collisionDamage':
+                        return `Increases collision damage by ${(effect.value * 100).toFixed(0)}%`;
+                    default:
+                        return '';
+                }
+            }).filter(desc => desc !== '').join('<br>');
+            
+            if (effectDescriptions) {
+                levelDescription = `<p class="level-description">Current effect:<br>${effectDescriptions}</p>`;
+            }
+        }
+        
         detailsPanel.innerHTML = `
             <div class="skill-details-header">
                 <h3>${skill.name}</h3>
@@ -1708,6 +1693,7 @@ export class SpecializationSystem {
             <div class="skill-details-content">
                 <div class="skill-icon large">${skill.icon}</div>
                 <p class="skill-description">${skill.description}</p>
+                ${levelDescription}
                 <div class="skill-attributes">
                     ${skill.type === 'active' ? `<div class="attribute">Type: Active</div>` : `<div class="attribute">Type: Passive</div>`}
                     ${skill.cooldown ? `<div class="attribute">Cooldown: ${skill.cooldown}s</div>` : ''}
@@ -1721,6 +1707,20 @@ export class SpecializationSystem {
         // Add to container
         container.appendChild(detailsPanel);
         
+        // Position the panel appropriately
+        const containerRect = container.getBoundingClientRect();
+        const detailsPanelRect = detailsPanel.getBoundingClientRect();
+        
+        // Make sure panel is within viewport
+        let panelLeft = Math.max(10, Math.min(window.innerWidth - detailsPanelRect.width - 10, 
+            containerRect.left + containerRect.width / 2 - detailsPanelRect.width / 2));
+            
+        let panelTop = Math.max(10, Math.min(window.innerHeight - detailsPanelRect.height - 10,
+            containerRect.top + containerRect.height / 2 - detailsPanelRect.height / 2));
+        
+        detailsPanel.style.left = `${panelLeft}px`;
+        detailsPanel.style.top = `${panelTop}px`;
+        
         // Add event listeners
         const closeButton = detailsPanel.querySelector('.close-details');
         if (closeButton) {
@@ -1732,10 +1732,7 @@ export class SpecializationSystem {
         const upgradeButton = detailsPanel.querySelector('.upgrade-skill-button');
         if (upgradeButton) {
             upgradeButton.addEventListener('click', () => {
-                console.log(`Upgrading skill ${skill.name}`);
                 if (this.upgradeSkill(specId, skillId)) {
-                    console.log(`Successfully upgraded skill ${skill.name} to level ${skill.level}`);
-                    
                     // Refresh the skill tree
                     const skillTreeContainer = document.getElementById('skill-trees-container');
                     if (skillTreeContainer) {
@@ -1743,11 +1740,18 @@ export class SpecializationSystem {
                     } else {
                         console.error('Skill trees container not found for refresh');
                     }
-                } else {
-                    console.error(`Failed to upgrade skill ${skill.name}`);
                 }
             });
         }
+        
+        // Allow closing by clicking outside the panel (but not on skill nodes)
+        document.addEventListener('click', function closeOnClickOutside(event) {
+            if (!detailsPanel.contains(event.target) && 
+                !event.target.closest('.skill-node')) {
+                detailsPanel.remove();
+                document.removeEventListener('click', closeOnClickOutside);
+            }
+        });
     }
     
     /**

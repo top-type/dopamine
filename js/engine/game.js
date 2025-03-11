@@ -744,8 +744,6 @@ export class Game {
      * Load the skill tree tab content
      */
     loadSkillTree() {
-        console.log('Loading skill tree tab content...');
-        
         // Get the skills-content container
         const container = document.getElementById('skills-content');
         if (!container) {
@@ -758,18 +756,14 @@ export class Game {
         
         // Check if there's a pending specialization unlock
         if (this.specializationSystem && this.specializationSystem.pendingSpecializationUnlock) {
-            console.log('Pending specialization unlock, showing selection UI');
             this.specializationSystem.showSpecializationSelection();
             return;
         }
         
         // Initialize skill points if not already done
         if (typeof this.skillPoints === 'undefined') {
-            console.log('Initializing skill points to 0');
             this.skillPoints = 0;
         }
-        
-        console.log(`Creating skill tree UI with ${this.skillPoints} skill points`);
         
         // Create the skill tree layout
         const skillTreeLayout = document.createElement('div');
@@ -794,9 +788,20 @@ export class Game {
         // Add the layout to the container
         container.appendChild(skillTreeLayout);
         
+        // Create a hint box for skills if not unlocked yet
+        if (!this.selectedSpecializations || this.selectedSpecializations.length === 0) {
+            const hintBox = document.createElement('div');
+            hintBox.className = 'skill-hint-box';
+            hintBox.innerHTML = `
+                <p>Specializations unlock at player level ${this.specializationSystem.specializationUnlockLevels[0]}.</p>
+                <p>Each specialization grants unique passive and active abilities.</p>
+                <p>Earn skill points as you level up to unlock and improve skills.</p>
+            `;
+            skillTreeLayout.appendChild(hintBox);
+        }
+        
         // Render skill trees
         if (this.specializationSystem) {
-            console.log('Rendering skill trees');
             this.specializationSystem.renderSkillTree(skillTreesContainer);
         } else {
             console.error('Specialization system not initialized');

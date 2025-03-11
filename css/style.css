@@ -3,9 +3,10 @@
  * Imports all modular CSS files
  */
 
-@import 'base.css';
-@import 'ui.css';
-@import 'menu.css';
+@import url('base.css');
+@import url('ui.css');
+@import url('menu.css');
+@import url('skills.css'); /* Added import for dedicated skills CSS file */
 
 /* Additional styles can be added here if needed */
 

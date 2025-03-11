@@ -452,8 +452,6 @@ export class Player extends Entity {
      * @param {Object} skill - The skill to add
      */
     addSkill(skill) {
-        console.log(`Adding skill to player: ${skill.name} (Level ${skill.level})`);
-        
         // Check if this is an active skill that should be added to special abilities
         if (skill.type === 'active') {
             // Create a new special ability from the skill
@@ -470,30 +468,15 @@ export class Player extends Entity {
             
             // Add to special abilities array
             this.specialAbilities.push(specialAbility);
-            
-            console.log(`Added active skill: ${skill.name} to special abilities`);
         } 
         // If it's a passive skill, apply its effects
         else if (skill.type === 'passive') {
             // Apply passive skill effects
             if (skill.effects) {
-                // Special debug for multiShot
-                if (skill.id === 'multi_shot') {
-                    console.log(`Initializing multiShot skill at level ${skill.level}`);
-                    console.log(`multiShotLevel before applying effect: ${this.multiShotLevel}`);
-                }
-                
                 skill.effects.forEach(effect => {
                     this.applyPassiveEffect(effect);
                 });
-                
-                // Debug check after applying effect
-                if (skill.id === 'multi_shot') {
-                    console.log(`multiShotLevel after applying effect: ${this.multiShotLevel}`);
-                }
             }
-            
-            console.log(`Applied passive skill: ${skill.name} (Level ${skill.level})`);
         }
     }
     
@@ -502,58 +485,47 @@ export class Player extends Entity {
      * @param {Object} effect - The effect to apply
      */
     applyPassiveEffect(effect) {
-        console.log(`Applying passive effect: ${effect.type} with value ${effect.value}`);
-        
         switch (effect.type) {
             case 'damage':
                 // Increase damage by percentage
                 this.primaryWeapon.damage *= (1 + effect.value);
-                console.log(`Increased damage to ${this.primaryWeapon.damage}`);
                 break;
                 
             case 'fireRate':
                 // Increase fire rate by percentage
                 this.primaryWeapon.fireRate *= (1 + effect.value);
-                console.log(`Increased fire rate to ${this.primaryWeapon.fireRate}`);
                 break;
                 
             case 'shield':
                 // Increase max shield by percentage
                 this.maxShield *= (1 + effect.value);
                 this.shield = this.maxShield; // Refill shield
-                console.log(`Increased max shield to ${this.maxShield}`);
                 break;
                 
             case 'shieldRegen':
                 // Increase shield regeneration rate by percentage
                 this.shieldRegenRate *= (1 + effect.value);
-                console.log(`Increased shield regen rate to ${this.shieldRegenRate}`);
                 break;
                 
             case 'speed':
                 // Increase speed by percentage
                 this.baseSpeed *= (1 + effect.value);
                 this.currentSpeed = this.baseSpeed;
-                console.log(`Increased speed to ${this.baseSpeed}`);
                 break;
                 
             case 'multiShot':
-                // Store the multiShot level for later use in firePrimaryWeapon
-                // Ensure the value is a number and properly stored
+                // Store the multiShot level
                 this.multiShotLevel = Number(effect.value);
-                console.log(`Applied Multi Shot passive effect - set multiShotLevel to ${this.multiShotLevel} (type: ${typeof this.multiShotLevel})`);
                 break;
                 
             case 'collisionDamage':
                 // Increase collision damage by percentage
                 this.collisionDamage *= (1 + effect.value);
-                console.log(`Increased collision damage to ${this.collisionDamage}`);
                 break;
                 
             case 'criticalStrike':
                 // Set chance for critical hits that do double damage
                 this.criticalStrikeChance = effect.value;
-                console.log(`Set critical strike chance to ${this.criticalStrikeChance * 100}%`);
                 break;
                 
             default:
@@ -567,8 +539,6 @@ export class Player extends Entity {
      * @param {Object} skill - The skill to update
      */
     updateSkill(skill) {
-        console.log(`Player.updateSkill called for: ${skill.name} (Level ${skill.level})`);
-        
         // For active skills, update the corresponding special ability
         if (skill.type === 'active') {
             const abilityIndex = this.specialAbilities.findIndex(ability => ability.id === skill.id);
@@ -577,10 +547,7 @@ export class Player extends Entity {
                 // Update properties that might change with level
                 this.specialAbilities[abilityIndex].cooldown = skill.cooldown;
                 this.specialAbilities[abilityIndex].effect = skill.effect;
-                
-                console.log(`Updated active skill: ${skill.name}`);
             } else {
-                console.error(`Tried to update non-existent skill: ${skill.name}`);
                 // If not found, add it as a new skill
                 this.addSkill(skill);
             }
@@ -589,15 +556,12 @@ export class Player extends Entity {
         else if (skill.type === 'passive' && skill.effects) {
             // Special case for multiShot to ensure it's working properly
             if (skill.id === 'multi_shot') {
-                console.log(`Special handling for multiShot skill (level ${skill.level})`);
                 const multiShotEffect = skill.effects.find(effect => effect.type === 'multiShot');
                 if (multiShotEffect) {
                     // Directly set multiShotLevel using the skill level
                     this.multiShotLevel = Number(skill.level);
                     // Also ensure the effect value is correct
                     multiShotEffect.value = Number(skill.level);
-                    console.log(`Directly setting multiShotLevel to ${this.multiShotLevel} (type: ${typeof this.multiShotLevel})`);
-                    console.log(`Also set effect value to ${multiShotEffect.value} (type: ${typeof multiShotEffect.value})`);
                 }
             }
             
@@ -605,8 +569,6 @@ export class Player extends Entity {
             skill.effects.forEach(effect => {
                 this.applyPassiveEffect(effect);
             });
-            
-            console.log(`Updated passive skill: ${skill.name} to level ${skill.level}`);
         }
     }
     
